@@ -1398,6 +1398,75 @@ export default function PanGalacticGargleBlaster ()
     ] );
   }, [ presets, pushDebug ] );
 
+  const exportSVG = useCallback( () =>
+  {
+    const svg = svgRef.current;
+    if ( !svg ) return;
+    const clone = svg.cloneNode( true );
+    const rect = svg.getBoundingClientRect();
+    clone.setAttribute( "width", rect.width );
+    clone.setAttribute( "height", rect.height );
+    clone.setAttribute( "xmlns", "http://www.w3.org/2000/svg" );
+    // inline CSS variables so the SVG is self-contained
+    const styles = document.createElement( "style" );
+    styles.textContent = `
+    :root{--bg:#0d1117;--sf:#161b22;--s2:#1c2333;--bd:#30363d;--fg:#c9d1d9;--fd:#8b949e;--ac:#58a6ff;--a2:#3fb950;--a3:#d2a8ff;--wr:#d29922;--er:#f85149;--gd:rgba(48,54,61,0.4)}
+    text{font-family:monospace}
+  `;
+    clone.insertBefore( styles, clone.firstChild );
+    const blob = new Blob( [ new XMLSerializer().serializeToString( clone ) ], {
+      type: "image/svg+xml",
+    } );
+    const url = URL.createObjectURL( blob );
+    const a = document.createElement( "a" );
+    a.href = url;
+    a.download = "PanGalacticGargleBlaster.svg";
+    a.click();
+    URL.revokeObjectURL( url );
+  }, [] );
+
+  const exportPNG = useCallback( () =>
+  {
+    const svg = svgRef.current;
+    if ( !svg ) return;
+    const rect = svg.getBoundingClientRect();
+    const scale = 2;
+    const clone = svg.cloneNode( true );
+    clone.setAttribute( "width", rect.width );
+    clone.setAttribute( "height", rect.height );
+    clone.setAttribute( "xmlns", "http://www.w3.org/2000/svg" );
+    const styles = document.createElement( "style" );
+    styles.textContent = `
+    :root{--bg:#0d1117;--sf:#161b22;--s2:#1c2333;--bd:#30363d;--fg:#c9d1d9;--fd:#8b949e;--ac:#58a6ff;--a2:#3fb950;--a3:#d2a8ff;--wr:#d29922;--er:#f85149;--gd:rgba(48,54,61,0.4)}
+    text{font-family:monospace}
+  `;
+    clone.insertBefore( styles, clone.firstChild );
+    const data = new XMLSerializer().serializeToString( clone );
+    const img = new Image();
+    img.onload = () =>
+    {
+      const canvas = document.createElement( "canvas" );
+      canvas.width = rect.width * scale;
+      canvas.height = rect.height * scale;
+      const ctx = canvas.getContext( "2d" );
+      ctx.scale( scale, scale );
+      ctx.fillStyle = "#0d1117";
+      ctx.fillRect( 0, 0, rect.width, rect.height );
+      ctx.drawImage( img, 0, 0, rect.width, rect.height );
+      canvas.toBlob( ( blob ) =>
+      {
+        const url = URL.createObjectURL( blob );
+        const a = document.createElement( "a" );
+        a.href = url;
+        a.download = "PanGalacticGargleBlaster.png";
+        a.click();
+        URL.revokeObjectURL( url );
+      }, "image/png" );
+    };
+    img.src =
+      "data:image/svg+xml;base64," + btoa( unescape( encodeURIComponent( data ) ) );
+  }, [] );
+
   const handleImport = useCallback(
     ( e ) =>
     {
@@ -2001,6 +2070,20 @@ export default function PanGalacticGargleBlaster ()
             onClick={ exportAll }
           >
             Export All
+          </button>
+          <button
+            style={ bt( false ) }
+            onClick={ exportSVG }
+            disabled={ nodes.length === 0 }
+          >
+            SVG
+          </button>
+          <button
+            style={ bt( false ) }
+            onClick={ exportPNG }
+            disabled={ nodes.length === 0 }
+          >
+            PNG
           </button>
           {/* Layout controls */ }
           <select
