@@ -1,6 +1,8 @@
-# Pan Galactic Gargle Blaster   
-Finite State Machines for the win! Named after the famed drink that has a recipe that only the best hitchhikers can compile.   
-     
+# Pan Galactic Gargle Blaster      
+          
+Finite State Machines for the win! Named after the famed drink that has a recipe that only the best hitchhikers can compile.      
+*have your brains smashed out by a slice of lemon wrapped round a large gold brick.*    
+             
 “After two of those babies, the dullest, most by-the-book Vogon will be up on the bar in stilettos, yodeling mountain shanties and swearing he's the king of the Gray Binding Fiefdoms of Saxaquine”    
 —On the drink's effects   
      
