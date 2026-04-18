@@ -1,0 +1,656 @@
+{
+  "version": "1.0.0",
+  "format": "typestate-fsm",
+  "description": "Typestate FSM preset collection. Each machine defines states (nodes), transitions (edges), an initial state, and accepting/final states.",
+  "schema": {
+    "node": "{ id: string, name: string, x: number, y: number }",
+    "edge": "{ id: string, from: string (node id), to: string (node id), event: string }",
+    "machine": "{ label, category, description, nodes[], edges[], initialStateId, finalStateIds[] }"
+  },
+  "machines": {
+    "trafficLight": {
+      "label": "Traffic Light",
+      "category": "Classic",
+      "description": "Cyclic three-state machine. No terminal state. Models any periodic process driven by a single recurring event.",
+      "nodes": [
+        { "id": "tl_r", "name": "Red", "x": 160, "y": 200 },
+        { "id": "tl_g", "name": "Green", "x": 400, "y": 200 },
+        { "id": "tl_y", "name": "Yellow", "x": 280, "y": 80 }
+      ],
+      "edges": [
+        { "id": "tl_e1", "from": "tl_r", "to": "tl_g", "event": "TIMER" },
+        { "id": "tl_e2", "from": "tl_g", "to": "tl_y", "event": "TIMER" },
+        { "id": "tl_e3", "from": "tl_y", "to": "tl_r", "event": "TIMER" }
+      ],
+      "initialStateId": "tl_r",
+      "finalStateIds": []
+    },
+    "fetchLifecycle": {
+      "label": "Fetch Lifecycle",
+      "category": "Classic",
+      "description": "Async data fetching pattern: idle, loading, success, error with retry. The canonical useReducer example.",
+      "nodes": [
+        { "id": "fl_i", "name": "idle", "x": 120, "y": 180 },
+        { "id": "fl_l", "name": "loading", "x": 320, "y": 180 },
+        { "id": "fl_s", "name": "success", "x": 500, "y": 100 },
+        { "id": "fl_e", "name": "error", "x": 500, "y": 260 }
+      ],
+      "edges": [
+        { "id": "fl_e1", "from": "fl_i", "to": "fl_l", "event": "FETCH" },
+        { "id": "fl_e2", "from": "fl_l", "to": "fl_s", "event": "RESOLVE" },
+        { "id": "fl_e3", "from": "fl_l", "to": "fl_e", "event": "REJECT" },
+        { "id": "fl_e4", "from": "fl_e", "to": "fl_l", "event": "RETRY" }
+      ],
+      "initialStateId": "fl_i",
+      "finalStateIds": ["fl_s"]
+    },
+    "turnstile": {
+      "label": "Turnstile",
+      "category": "Classic",
+      "description": "Two-state machine with self-loops. The textbook introductory FSM. Demonstrates no-op transitions as explicit self-loops.",
+      "nodes": [
+        { "id": "ts_l", "name": "locked", "x": 180, "y": 180 },
+        { "id": "ts_u", "name": "unlocked", "x": 420, "y": 180 }
+      ],
+      "edges": [
+        { "id": "ts_e1", "from": "ts_l", "to": "ts_u", "event": "COIN" },
+        { "id": "ts_e2", "from": "ts_u", "to": "ts_l", "event": "PUSH" },
+        { "id": "ts_e3", "from": "ts_l", "to": "ts_l", "event": "PUSH" },
+        { "id": "ts_e4", "from": "ts_u", "to": "ts_u", "event": "COIN" }
+      ],
+      "initialStateId": "ts_l",
+      "finalStateIds": ["ts_u"]
+    },
+    "regexAB": {
+      "label": "Regex (ends in 'ab')",
+      "category": "Classic",
+      "description": "DFA accepting strings over {a,b} ending with 'ab'. Equivalent to regex (a|b)*ab. Demonstrates regex-FSM equivalence.",
+      "nodes": [
+        { "id": "rx_q0", "name": "q0", "x": 140, "y": 180 },
+        { "id": "rx_q1", "name": "q1", "x": 320, "y": 180 },
+        { "id": "rx_q2", "name": "q2", "x": 500, "y": 180 }
+      ],
+      "edges": [
+        { "id": "rx_e1", "from": "rx_q0", "to": "rx_q0", "event": "b" },
+        { "id": "rx_e2", "from": "rx_q0", "to": "rx_q1", "event": "a" },
+        { "id": "rx_e3", "from": "rx_q1", "to": "rx_q1", "event": "a" },
+        { "id": "rx_e4", "from": "rx_q1", "to": "rx_q2", "event": "b" },
+        { "id": "rx_e5", "from": "rx_q2", "to": "rx_q1", "event": "a" },
+        { "id": "rx_e6", "from": "rx_q2", "to": "rx_q0", "event": "b" }
+      ],
+      "initialStateId": "rx_q0",
+      "finalStateIds": ["rx_q2"]
+    },
+    "vendingMachine": {
+      "label": "Vending Machine",
+      "category": "Classic",
+      "description": "Transactional process with branching (select vs cancel) and convergence (both paths return to idle).",
+      "nodes": [
+        { "id": "vm_i", "name": "idle", "x": 120, "y": 200 },
+        { "id": "vm_s", "name": "selecting", "x": 320, "y": 120 },
+        { "id": "vm_d", "name": "dispensing", "x": 500, "y": 200 },
+        { "id": "vm_c", "name": "cancelled", "x": 320, "y": 300 }
+      ],
+      "edges": [
+        { "id": "vm_e1", "from": "vm_i", "to": "vm_s", "event": "INSERT_COIN" },
+        { "id": "vm_e2", "from": "vm_s", "to": "vm_d", "event": "SELECT" },
+        { "id": "vm_e3", "from": "vm_s", "to": "vm_c", "event": "CANCEL" },
+        { "id": "vm_e4", "from": "vm_d", "to": "vm_i", "event": "DISPENSE" },
+        { "id": "vm_e5", "from": "vm_c", "to": "vm_i", "event": "REFUND" }
+      ],
+      "initialStateId": "vm_i",
+      "finalStateIds": ["vm_i"]
+    },
+    "tcpConnection": {
+      "label": "TCP Connection",
+      "category": "Classic",
+      "description": "Simplified TCP state diagram (RFC 793). 9 states, 11 transitions. A real-world complex protocol FSM.",
+      "nodes": [
+        { "id": "tcp_cl", "name": "CLOSED", "x": 100, "y": 60 },
+        { "id": "tcp_li", "name": "LISTEN", "x": 100, "y": 200 },
+        { "id": "tcp_ss", "name": "SYN_SENT", "x": 300, "y": 60 },
+        { "id": "tcp_sr", "name": "SYN_RCVD", "x": 300, "y": 200 },
+        { "id": "tcp_es", "name": "ESTABLISHED", "x": 500, "y": 130 },
+        { "id": "tcp_fw", "name": "FIN_WAIT", "x": 500, "y": 280 },
+        { "id": "tcp_cw", "name": "CLOSE_WAIT", "x": 300, "y": 340 },
+        { "id": "tcp_la", "name": "LAST_ACK", "x": 100, "y": 340 },
+        { "id": "tcp_tw", "name": "TIME_WAIT", "x": 500, "y": 400 }
+      ],
+      "edges": [
+        { "id": "tcp_e1", "from": "tcp_cl", "to": "tcp_li", "event": "LISTEN" },
+        { "id": "tcp_e2", "from": "tcp_cl", "to": "tcp_ss", "event": "SYN" },
+        { "id": "tcp_e3", "from": "tcp_li", "to": "tcp_sr", "event": "SYN_RCVD" },
+        { "id": "tcp_e4", "from": "tcp_ss", "to": "tcp_es", "event": "SYN_ACK" },
+        { "id": "tcp_e5", "from": "tcp_sr", "to": "tcp_es", "event": "ACK" },
+        { "id": "tcp_e6", "from": "tcp_es", "to": "tcp_fw", "event": "FIN" },
+        { "id": "tcp_e7", "from": "tcp_es", "to": "tcp_cw", "event": "CLOSE" },
+        { "id": "tcp_e8", "from": "tcp_fw", "to": "tcp_tw", "event": "ACK" },
+        { "id": "tcp_e9", "from": "tcp_cw", "to": "tcp_la", "event": "FIN" },
+        { "id": "tcp_e10", "from": "tcp_la", "to": "tcp_cl", "event": "ACK" },
+        { "id": "tcp_e11", "from": "tcp_tw", "to": "tcp_cl", "event": "TIMEOUT" }
+      ],
+      "initialStateId": "tcp_cl",
+      "finalStateIds": ["tcp_cl"]
+    },
+
+    "ifrs17_contractLifecycle": {
+      "label": "IFRS 17: Contract Lifecycle",
+      "category": "IFRS 17",
+      "description": "Insurance contract lifecycle under IFRS 17. Tracks a contract from initial recognition through measurement periods to derecognition on settlement, expiry, or transfer.",
+      "nodes": [
+        { "id": "i17cl_unrec", "name": "UNRECOGNIZED", "x": 100, "y": 200 },
+        { "id": "i17cl_init", "name": "INITIAL_RECOGNITION", "x": 280, "y": 100 },
+        { "id": "i17cl_meas", "name": "SUBSEQUENT_MEASUREMENT", "x": 460, "y": 200 },
+        { "id": "i17cl_mod", "name": "MODIFIED", "x": 280, "y": 300 },
+        { "id": "i17cl_derec", "name": "DERECOGNIZED", "x": 560, "y": 380 }
+      ],
+      "edges": [
+        { "id": "i17cl_e1", "from": "i17cl_unrec", "to": "i17cl_init", "event": "COVERAGE_BEGINS" },
+        { "id": "i17cl_e2", "from": "i17cl_init", "to": "i17cl_meas", "event": "INITIAL_MEASURE" },
+        { "id": "i17cl_e3", "from": "i17cl_meas", "to": "i17cl_meas", "event": "PERIOD_END" },
+        { "id": "i17cl_e4", "from": "i17cl_meas", "to": "i17cl_mod", "event": "MODIFY_CONTRACT" },
+        { "id": "i17cl_e5", "from": "i17cl_mod", "to": "i17cl_meas", "event": "REMEASURE" },
+        { "id": "i17cl_e6", "from": "i17cl_meas", "to": "i17cl_derec", "event": "SETTLE" },
+        { "id": "i17cl_e7", "from": "i17cl_meas", "to": "i17cl_derec", "event": "EXPIRE" },
+        { "id": "i17cl_e8", "from": "i17cl_meas", "to": "i17cl_derec", "event": "TRANSFER" }
+      ],
+      "initialStateId": "i17cl_unrec",
+      "finalStateIds": ["i17cl_derec"]
+    },
+    "ifrs17_classification": {
+      "label": "IFRS 17: Measurement Model",
+      "category": "IFRS 17",
+      "description": "Contract group classification into GMM (General Measurement Model), VFA (Variable Fee Approach), or PAA (Premium Allocation Approach) based on contract characteristics.",
+      "nodes": [
+        { "id": "i17c_new", "name": "UNCLASSIFIED", "x": 100, "y": 200 },
+        { "id": "i17c_eval", "name": "EVALUATING", "x": 280, "y": 200 },
+        { "id": "i17c_gmm", "name": "GMM", "x": 480, "y": 100 },
+        { "id": "i17c_vfa", "name": "VFA", "x": 480, "y": 200 },
+        { "id": "i17c_paa", "name": "PAA", "x": 480, "y": 300 }
+      ],
+      "edges": [
+        { "id": "i17c_e1", "from": "i17c_new", "to": "i17c_eval", "event": "BEGIN_CLASSIFICATION" },
+        { "id": "i17c_e2", "from": "i17c_eval", "to": "i17c_vfa", "event": "DIRECT_PARTICIPATION" },
+        { "id": "i17c_e3", "from": "i17c_eval", "to": "i17c_paa", "event": "SHORT_COVERAGE" },
+        { "id": "i17c_e4", "from": "i17c_eval", "to": "i17c_gmm", "event": "GENERAL_MODEL" }
+      ],
+      "initialStateId": "i17c_new",
+      "finalStateIds": ["i17c_gmm", "i17c_vfa", "i17c_paa"]
+    },
+    "ifrs17_csmTracking": {
+      "label": "IFRS 17: CSM / Loss Component",
+      "category": "IFRS 17",
+      "description": "Tracks whether a contract group is profitable (positive CSM) or onerous (loss component recognized). CSM absorbs favourable/unfavourable changes; when depleted, a loss is recognized in P&L.",
+      "nodes": [
+        { "id": "i17csm_prof", "name": "PROFITABLE", "x": 140, "y": 160 },
+        { "id": "i17csm_oner", "name": "ONEROUS", "x": 400, "y": 160 },
+        { "id": "i17csm_loss", "name": "LOSS_IN_PL", "x": 400, "y": 320 },
+        { "id": "i17csm_rev", "name": "LOSS_REVERSED", "x": 140, "y": 320 }
+      ],
+      "edges": [
+        { "id": "i17csm_e1", "from": "i17csm_prof", "to": "i17csm_prof", "event": "UNFAV_ABSORBED" },
+        { "id": "i17csm_e2", "from": "i17csm_prof", "to": "i17csm_oner", "event": "CSM_DEPLETED" },
+        { "id": "i17csm_e3", "from": "i17csm_oner", "to": "i17csm_loss", "event": "RECOGNIZE_LOSS" },
+        { "id": "i17csm_e4", "from": "i17csm_loss", "to": "i17csm_loss", "event": "FURTHER_LOSS" },
+        { "id": "i17csm_e5", "from": "i17csm_loss", "to": "i17csm_rev", "event": "FAVORABLE_CHANGE" },
+        { "id": "i17csm_e6", "from": "i17csm_rev", "to": "i17csm_prof", "event": "CSM_RESTORED" },
+        { "id": "i17csm_e7", "from": "i17csm_oner", "to": "i17csm_prof", "event": "FAVORABLE_CHANGE" }
+      ],
+      "initialStateId": "i17csm_prof",
+      "finalStateIds": ["i17csm_prof"]
+    },
+
+    "ifrs9_eclStaging": {
+      "label": "IFRS 9: ECL Staging",
+      "category": "IFRS 9",
+      "description": "Expected Credit Loss staging under IFRS 9. Stage 1 (12-month ECL), Stage 2 (lifetime ECL, performing), Stage 3 (lifetime ECL, credit-impaired). Instruments move between stages based on credit risk changes.",
+      "nodes": [
+        { "id": "i9s_s1", "name": "STAGE_1", "x": 120, "y": 200 },
+        { "id": "i9s_s2", "name": "STAGE_2", "x": 320, "y": 200 },
+        { "id": "i9s_s3", "name": "STAGE_3", "x": 520, "y": 200 },
+        { "id": "i9s_wo", "name": "WRITTEN_OFF", "x": 520, "y": 360 },
+        { "id": "i9s_dr", "name": "DERECOGNIZED", "x": 120, "y": 360 }
+      ],
+      "edges": [
+        { "id": "i9s_e1", "from": "i9s_s1", "to": "i9s_s2", "event": "SIGNIFICANT_INCREASE" },
+        { "id": "i9s_e2", "from": "i9s_s2", "to": "i9s_s3", "event": "DEFAULT" },
+        { "id": "i9s_e3", "from": "i9s_s2", "to": "i9s_s1", "event": "CURE" },
+        { "id": "i9s_e4", "from": "i9s_s3", "to": "i9s_s2", "event": "CURE" },
+        { "id": "i9s_e5", "from": "i9s_s3", "to": "i9s_wo", "event": "WRITE_OFF" },
+        { "id": "i9s_e6", "from": "i9s_s1", "to": "i9s_dr", "event": "MATURITY" },
+        { "id": "i9s_e7", "from": "i9s_s2", "to": "i9s_dr", "event": "MATURITY" },
+        { "id": "i9s_e8", "from": "i9s_s1", "to": "i9s_s3", "event": "DEFAULT" }
+      ],
+      "initialStateId": "i9s_s1",
+      "finalStateIds": ["i9s_dr"]
+    },
+    "ifrs9_classification": {
+      "label": "IFRS 9: Asset Classification",
+      "category": "IFRS 9",
+      "description": "Financial asset classification under IFRS 9. Two tests: SPPI (solely payments of principal and interest) and Business Model. Determines measurement basis: amortized cost, FVOCI, or FVTPL.",
+      "nodes": [
+        { "id": "i9a_init", "name": "INITIAL", "x": 80, "y": 200 },
+        { "id": "i9a_sppi", "name": "SPPI_TEST", "x": 230, "y": 200 },
+        { "id": "i9a_bm", "name": "BIZ_MODEL_TEST", "x": 400, "y": 120 },
+        { "id": "i9a_ac", "name": "AMORTIZED_COST", "x": 560, "y": 60 },
+        { "id": "i9a_fvoci", "name": "FVOCI", "x": 560, "y": 180 },
+        { "id": "i9a_fvtpl", "name": "FVTPL", "x": 400, "y": 320 }
+      ],
+      "edges": [
+        { "id": "i9a_e1", "from": "i9a_init", "to": "i9a_sppi", "event": "CLASSIFY" },
+        { "id": "i9a_e2", "from": "i9a_sppi", "to": "i9a_bm", "event": "SPPI_PASS" },
+        { "id": "i9a_e3", "from": "i9a_sppi", "to": "i9a_fvtpl", "event": "SPPI_FAIL" },
+        { "id": "i9a_e4", "from": "i9a_bm", "to": "i9a_ac", "event": "HOLD_TO_COLLECT" },
+        { "id": "i9a_e5", "from": "i9a_bm", "to": "i9a_fvoci", "event": "HOLD_AND_SELL" },
+        { "id": "i9a_e6", "from": "i9a_bm", "to": "i9a_fvtpl", "event": "TRADING" }
+      ],
+      "initialStateId": "i9a_init",
+      "finalStateIds": ["i9a_ac", "i9a_fvoci", "i9a_fvtpl"]
+    },
+    "ifrs9_hedgeAccounting": {
+      "label": "IFRS 9: Hedge Accounting",
+      "category": "IFRS 9",
+      "description": "Hedge accounting lifecycle: designation, effectiveness testing, rebalancing, and discontinuation. A hedge relationship must meet qualifying criteria continuously.",
+      "nodes": [
+        { "id": "i9h_undes", "name": "UNDESIGNATED", "x": 100, "y": 200 },
+        { "id": "i9h_des", "name": "DESIGNATED", "x": 280, "y": 120 },
+        { "id": "i9h_eff", "name": "EFFECTIVE", "x": 460, "y": 120 },
+        { "id": "i9h_ineff", "name": "INEFFECTIVE", "x": 460, "y": 280 },
+        { "id": "i9h_disc", "name": "DISCONTINUED", "x": 280, "y": 340 }
+      ],
+      "edges": [
+        { "id": "i9h_e1", "from": "i9h_undes", "to": "i9h_des", "event": "DESIGNATE" },
+        { "id": "i9h_e2", "from": "i9h_des", "to": "i9h_eff", "event": "PASS_EFFECTIVENESS" },
+        { "id": "i9h_e3", "from": "i9h_des", "to": "i9h_ineff", "event": "FAIL_EFFECTIVENESS" },
+        { "id": "i9h_e4", "from": "i9h_eff", "to": "i9h_eff", "event": "REBALANCE" },
+        { "id": "i9h_e5", "from": "i9h_eff", "to": "i9h_ineff", "event": "FAIL_EFFECTIVENESS" },
+        { "id": "i9h_e6", "from": "i9h_ineff", "to": "i9h_disc", "event": "DISCONTINUE" },
+        { "id": "i9h_e7", "from": "i9h_eff", "to": "i9h_disc", "event": "EXPIRE" },
+        { "id": "i9h_e8", "from": "i9h_ineff", "to": "i9h_eff", "event": "REBALANCE" }
+      ],
+      "initialStateId": "i9h_undes",
+      "finalStateIds": ["i9h_disc"]
+    },
+
+    "sc_orderFulfillment": {
+      "label": "Order Fulfillment",
+      "category": "Supply Chain",
+      "description": "End-to-end order lifecycle from placement through picking, packing, shipping, and delivery. Includes return path for reverse logistics.",
+      "nodes": [
+        { "id": "sc_of_placed", "name": "PLACED", "x": 80, "y": 180 },
+        { "id": "sc_of_conf", "name": "CONFIRMED", "x": 200, "y": 100 },
+        { "id": "sc_of_pick", "name": "PICKING", "x": 320, "y": 100 },
+        { "id": "sc_of_pack", "name": "PACKING", "x": 440, "y": 100 },
+        { "id": "sc_of_ship", "name": "SHIPPED", "x": 540, "y": 180 },
+        { "id": "sc_of_del", "name": "DELIVERED", "x": 440, "y": 300 },
+        { "id": "sc_of_ret", "name": "RETURNED", "x": 200, "y": 300 }
+      ],
+      "edges": [
+        { "id": "sc_of_e1", "from": "sc_of_placed", "to": "sc_of_conf", "event": "CONFIRM" },
+        { "id": "sc_of_e2", "from": "sc_of_conf", "to": "sc_of_pick", "event": "BEGIN_PICK" },
+        { "id": "sc_of_e3", "from": "sc_of_pick", "to": "sc_of_pack", "event": "PICKED" },
+        { "id": "sc_of_e4", "from": "sc_of_pack", "to": "sc_of_ship", "event": "SHIP" },
+        { "id": "sc_of_e5", "from": "sc_of_ship", "to": "sc_of_del", "event": "DELIVER" },
+        { "id": "sc_of_e6", "from": "sc_of_del", "to": "sc_of_ret", "event": "RETURN" },
+        { "id": "sc_of_e7", "from": "sc_of_placed", "to": "sc_of_placed", "event": "CANCEL" }
+      ],
+      "initialStateId": "sc_of_placed",
+      "finalStateIds": ["sc_of_del"]
+    },
+    "sc_inventoryMgmt": {
+      "label": "Inventory Management",
+      "category": "Supply Chain",
+      "description": "Inventory lifecycle with reorder point logic. Tracks stock levels through depletion, reorder triggers, procurement, and replenishment. Includes stockout as a failure state.",
+      "nodes": [
+        { "id": "sc_inv_ok", "name": "IN_STOCK", "x": 120, "y": 120 },
+        { "id": "sc_inv_low", "name": "LOW_STOCK", "x": 300, "y": 120 },
+        { "id": "sc_inv_reord", "name": "REORDER_PLACED", "x": 480, "y": 120 },
+        { "id": "sc_inv_recv", "name": "RECEIVING", "x": 480, "y": 280 },
+        { "id": "sc_inv_out", "name": "STOCKOUT", "x": 300, "y": 280 }
+      ],
+      "edges": [
+        { "id": "sc_inv_e1", "from": "sc_inv_ok", "to": "sc_inv_low", "event": "SELL" },
+        { "id": "sc_inv_e2", "from": "sc_inv_low", "to": "sc_inv_reord", "event": "REORDER" },
+        { "id": "sc_inv_e3", "from": "sc_inv_reord", "to": "sc_inv_recv", "event": "GOODS_ARRIVE" },
+        { "id": "sc_inv_e4", "from": "sc_inv_recv", "to": "sc_inv_ok", "event": "STOCK_RECEIVED" },
+        { "id": "sc_inv_e5", "from": "sc_inv_low", "to": "sc_inv_out", "event": "DEPLETE" },
+        { "id": "sc_inv_e6", "from": "sc_inv_out", "to": "sc_inv_reord", "event": "EMERGENCY_ORDER" },
+        { "id": "sc_inv_e7", "from": "sc_inv_ok", "to": "sc_inv_ok", "event": "SELL" }
+      ],
+      "initialStateId": "sc_inv_ok",
+      "finalStateIds": ["sc_inv_ok"]
+    },
+    "sc_qualityControl": {
+      "label": "Quality Control",
+      "category": "Supply Chain",
+      "description": "Incoming goods inspection process. Items are inspected, passed or failed, sent to rework or scrap, and released to inventory only after passing.",
+      "nodes": [
+        { "id": "sc_qc_inc", "name": "INCOMING", "x": 80, "y": 200 },
+        { "id": "sc_qc_insp", "name": "INSPECTING", "x": 220, "y": 200 },
+        { "id": "sc_qc_pass", "name": "PASSED", "x": 400, "y": 120 },
+        { "id": "sc_qc_fail", "name": "FAILED", "x": 400, "y": 300 },
+        { "id": "sc_qc_rew", "name": "REWORK", "x": 540, "y": 300 },
+        { "id": "sc_qc_scrap", "name": "SCRAPPED", "x": 540, "y": 400 },
+        { "id": "sc_qc_rel", "name": "RELEASED", "x": 540, "y": 120 }
+      ],
+      "edges": [
+        { "id": "sc_qc_e1", "from": "sc_qc_inc", "to": "sc_qc_insp", "event": "INSPECT" },
+        { "id": "sc_qc_e2", "from": "sc_qc_insp", "to": "sc_qc_pass", "event": "PASS" },
+        { "id": "sc_qc_e3", "from": "sc_qc_insp", "to": "sc_qc_fail", "event": "FAIL" },
+        { "id": "sc_qc_e4", "from": "sc_qc_pass", "to": "sc_qc_rel", "event": "RELEASE" },
+        { "id": "sc_qc_e5", "from": "sc_qc_fail", "to": "sc_qc_rew", "event": "REWORK_ORDER" },
+        { "id": "sc_qc_e6", "from": "sc_qc_fail", "to": "sc_qc_scrap", "event": "SCRAP" },
+        { "id": "sc_qc_e7", "from": "sc_qc_rew", "to": "sc_qc_insp", "event": "REINSPECT" }
+      ],
+      "initialStateId": "sc_qc_inc",
+      "finalStateIds": ["sc_qc_rel"]
+    },
+    "sc_shipmentTracking": {
+      "label": "Shipment Tracking",
+      "category": "Supply Chain",
+      "description": "Parcel tracking from booking through hub transfers to last-mile delivery. Includes exception handling for lost or damaged shipments.",
+      "nodes": [
+        { "id": "sc_st_book", "name": "BOOKED", "x": 80, "y": 180 },
+        { "id": "sc_st_pick", "name": "PICKED_UP", "x": 200, "y": 100 },
+        { "id": "sc_st_trans", "name": "IN_TRANSIT", "x": 340, "y": 100 },
+        { "id": "sc_st_hub", "name": "AT_HUB", "x": 480, "y": 100 },
+        { "id": "sc_st_out", "name": "OUT_FOR_DELIVERY", "x": 480, "y": 250 },
+        { "id": "sc_st_del", "name": "DELIVERED", "x": 340, "y": 330 },
+        { "id": "sc_st_exc", "name": "EXCEPTION", "x": 160, "y": 300 }
+      ],
+      "edges": [
+        { "id": "sc_st_e1", "from": "sc_st_book", "to": "sc_st_pick", "event": "PICKUP" },
+        { "id": "sc_st_e2", "from": "sc_st_pick", "to": "sc_st_trans", "event": "DEPART" },
+        { "id": "sc_st_e3", "from": "sc_st_trans", "to": "sc_st_hub", "event": "ARRIVE_HUB" },
+        { "id": "sc_st_e4", "from": "sc_st_hub", "to": "sc_st_trans", "event": "FORWARD" },
+        { "id": "sc_st_e5", "from": "sc_st_hub", "to": "sc_st_out", "event": "DISPATCH" },
+        { "id": "sc_st_e6", "from": "sc_st_out", "to": "sc_st_del", "event": "DELIVER" },
+        { "id": "sc_st_e7", "from": "sc_st_trans", "to": "sc_st_exc", "event": "EXCEPTION" },
+        { "id": "sc_st_e8", "from": "sc_st_exc", "to": "sc_st_trans", "event": "RESOLVE" }
+      ],
+      "initialStateId": "sc_st_book",
+      "finalStateIds": ["sc_st_del"]
+    },
+
+    "bayes_inference": {
+      "label": "Bayesian Inference Pipeline",
+      "category": "Bayesian",
+      "description": "The Bayesian inference workflow: specify a prior, collect data, compute the likelihood, update to the posterior, check convergence, and iterate. The cycle from posterior back to data collection represents sequential updating.",
+      "nodes": [
+        { "id": "by_prior", "name": "PRIOR", "x": 100, "y": 160 },
+        { "id": "by_data", "name": "DATA", "x": 250, "y": 80 },
+        { "id": "by_like", "name": "LIKELIHOOD", "x": 420, "y": 80 },
+        { "id": "by_post", "name": "POSTERIOR", "x": 500, "y": 220 },
+        { "id": "by_check", "name": "CHECKING", "x": 320, "y": 300 },
+        { "id": "by_done", "name": "COMPLETE", "x": 120, "y": 320 }
+      ],
+      "edges": [
+        { "id": "by_e1", "from": "by_prior", "to": "by_data", "event": "COLLECT" },
+        { "id": "by_e2", "from": "by_data", "to": "by_like", "event": "COMPUTE_LIKELIHOOD" },
+        { "id": "by_e3", "from": "by_like", "to": "by_post", "event": "UPDATE" },
+        { "id": "by_e4", "from": "by_post", "to": "by_check", "event": "CHECK_CONVERGENCE" },
+        { "id": "by_e5", "from": "by_check", "to": "by_done", "event": "CONVERGED" },
+        { "id": "by_e6", "from": "by_check", "to": "by_data", "event": "MORE_DATA" },
+        { "id": "by_e7", "from": "by_post", "to": "by_data", "event": "SEQUENTIAL_UPDATE" }
+      ],
+      "initialStateId": "by_prior",
+      "finalStateIds": ["by_done"]
+    },
+    "bayes_modelSelection": {
+      "label": "Bayesian Model Selection",
+      "category": "Bayesian",
+      "description": "Model comparison workflow using information criteria (WAIC, LOO-CV). Fit candidate models, compute criteria, compare, select the best, and validate with posterior predictive checks.",
+      "nodes": [
+        { "id": "bm_cand", "name": "CANDIDATES", "x": 100, "y": 180 },
+        { "id": "bm_fit", "name": "FITTING", "x": 260, "y": 100 },
+        { "id": "bm_crit", "name": "COMPUTING_IC", "x": 420, "y": 100 },
+        { "id": "bm_comp", "name": "COMPARING", "x": 500, "y": 220 },
+        { "id": "bm_sel", "name": "SELECTED", "x": 360, "y": 320 },
+        { "id": "bm_val", "name": "VALIDATED", "x": 160, "y": 320 }
+      ],
+      "edges": [
+        { "id": "bm_e1", "from": "bm_cand", "to": "bm_fit", "event": "FIT" },
+        { "id": "bm_e2", "from": "bm_fit", "to": "bm_crit", "event": "COMPUTE_WAIC" },
+        { "id": "bm_e3", "from": "bm_crit", "to": "bm_comp", "event": "COMPARE" },
+        { "id": "bm_e4", "from": "bm_comp", "to": "bm_sel", "event": "SELECT_BEST" },
+        { "id": "bm_e5", "from": "bm_comp", "to": "bm_fit", "event": "ADD_MODEL" },
+        { "id": "bm_e6", "from": "bm_sel", "to": "bm_val", "event": "PPC_PASS" },
+        { "id": "bm_e7", "from": "bm_sel", "to": "bm_cand", "event": "PPC_FAIL" }
+      ],
+      "initialStateId": "bm_cand",
+      "finalStateIds": ["bm_val"]
+    },
+    "bayes_abTesting": {
+      "label": "Bayesian A/B Testing",
+      "category": "Bayesian",
+      "description": "Bayesian approach to A/B testing with optional early stopping. Unlike frequentist testing, the posterior probability of a winner can be checked continuously without inflating error rates.",
+      "nodes": [
+        { "id": "ba_design", "name": "DESIGN", "x": 100, "y": 180 },
+        { "id": "ba_run", "name": "RUNNING", "x": 280, "y": 100 },
+        { "id": "ba_analyze", "name": "ANALYZING", "x": 460, "y": 100 },
+        { "id": "ba_incon", "name": "INCONCLUSIVE", "x": 460, "y": 260 },
+        { "id": "ba_winner", "name": "WINNER_DECLARED", "x": 280, "y": 320 },
+        { "id": "ba_rolled", "name": "ROLLED_OUT", "x": 100, "y": 320 }
+      ],
+      "edges": [
+        { "id": "ba_e1", "from": "ba_design", "to": "ba_run", "event": "START_TEST" },
+        { "id": "ba_e2", "from": "ba_run", "to": "ba_analyze", "event": "BATCH_COMPLETE" },
+        { "id": "ba_e3", "from": "ba_analyze", "to": "ba_winner", "event": "THRESHOLD_MET" },
+        { "id": "ba_e4", "from": "ba_analyze", "to": "ba_incon", "event": "THRESHOLD_NOT_MET" },
+        { "id": "ba_e5", "from": "ba_incon", "to": "ba_run", "event": "CONTINUE" },
+        { "id": "ba_e6", "from": "ba_incon", "to": "ba_winner", "event": "MAX_SAMPLE_REACHED" },
+        { "id": "ba_e7", "from": "ba_winner", "to": "ba_rolled", "event": "ROLLOUT" }
+      ],
+      "initialStateId": "ba_design",
+      "finalStateIds": ["ba_rolled"]
+    },
+
+    "mcmc_metropolisHastings": {
+      "label": "Metropolis-Hastings",
+      "category": "MCMC",
+      "description": "The core MCMC loop: propose a new point from the proposal distribution, compute the acceptance ratio, accept or reject, record the sample, and repeat. The accept/reject step is the key mechanism that ensures the chain converges to the target distribution.",
+      "nodes": [
+        { "id": "mh_init", "name": "INITIALIZE", "x": 80, "y": 200 },
+        { "id": "mh_prop", "name": "PROPOSE", "x": 240, "y": 120 },
+        { "id": "mh_eval", "name": "EVALUATE", "x": 420, "y": 120 },
+        { "id": "mh_acc", "name": "ACCEPTED", "x": 520, "y": 240 },
+        { "id": "mh_rej", "name": "REJECTED", "x": 320, "y": 300 },
+        { "id": "mh_rec", "name": "RECORDED", "x": 140, "y": 340 }
+      ],
+      "edges": [
+        { "id": "mh_e1", "from": "mh_init", "to": "mh_prop", "event": "START" },
+        { "id": "mh_e2", "from": "mh_prop", "to": "mh_eval", "event": "COMPUTE_RATIO" },
+        { "id": "mh_e3", "from": "mh_eval", "to": "mh_acc", "event": "ACCEPT" },
+        { "id": "mh_e4", "from": "mh_eval", "to": "mh_rej", "event": "REJECT" },
+        { "id": "mh_e5", "from": "mh_acc", "to": "mh_rec", "event": "RECORD_NEW" },
+        { "id": "mh_e6", "from": "mh_rej", "to": "mh_rec", "event": "RECORD_CURRENT" },
+        { "id": "mh_e7", "from": "mh_rec", "to": "mh_prop", "event": "NEXT_ITERATION" }
+      ],
+      "initialStateId": "mh_init",
+      "finalStateIds": ["mh_rec"]
+    },
+    "mcmc_convergence": {
+      "label": "MCMC Convergence",
+      "category": "MCMC",
+      "description": "MCMC chain lifecycle from warmup through burn-in discard to productive sampling. Convergence diagnostics (R-hat, ESS) determine whether the chain has mixed and whether more samples are needed.",
+      "nodes": [
+        { "id": "mc_warm", "name": "WARMUP", "x": 100, "y": 160 },
+        { "id": "mc_burn", "name": "BURN_IN", "x": 260, "y": 100 },
+        { "id": "mc_samp", "name": "SAMPLING", "x": 420, "y": 100 },
+        { "id": "mc_diag", "name": "DIAGNOSTICS", "x": 500, "y": 240 },
+        { "id": "mc_conv", "name": "CONVERGED", "x": 340, "y": 320 },
+        { "id": "mc_fail", "name": "NOT_CONVERGED", "x": 140, "y": 300 }
+      ],
+      "edges": [
+        { "id": "mc_e1", "from": "mc_warm", "to": "mc_burn", "event": "ADAPT_COMPLETE" },
+        { "id": "mc_e2", "from": "mc_burn", "to": "mc_samp", "event": "DISCARD" },
+        { "id": "mc_e3", "from": "mc_samp", "to": "mc_diag", "event": "CHECK" },
+        { "id": "mc_e4", "from": "mc_diag", "to": "mc_conv", "event": "RHAT_OK" },
+        { "id": "mc_e5", "from": "mc_diag", "to": "mc_fail", "event": "RHAT_BAD" },
+        { "id": "mc_e6", "from": "mc_fail", "to": "mc_warm", "event": "RETUNE" },
+        { "id": "mc_e7", "from": "mc_fail", "to": "mc_samp", "event": "EXTEND" }
+      ],
+      "initialStateId": "mc_warm",
+      "finalStateIds": ["mc_conv"]
+    },
+    "mcmc_gibbs": {
+      "label": "Gibbs Sampler",
+      "category": "MCMC",
+      "description": "Gibbs sampling cycles through parameters, sampling each from its full conditional distribution while holding the others fixed. The cycle is the characteristic structure: theta1, theta2, theta3, record, repeat.",
+      "nodes": [
+        { "id": "gb_init", "name": "INIT", "x": 100, "y": 200 },
+        { "id": "gb_t1", "name": "SAMPLE_THETA1", "x": 260, "y": 100 },
+        { "id": "gb_t2", "name": "SAMPLE_THETA2", "x": 440, "y": 100 },
+        { "id": "gb_t3", "name": "SAMPLE_THETA3", "x": 500, "y": 240 },
+        { "id": "gb_rec", "name": "RECORD", "x": 320, "y": 320 }
+      ],
+      "edges": [
+        { "id": "gb_e1", "from": "gb_init", "to": "gb_t1", "event": "START" },
+        { "id": "gb_e2", "from": "gb_t1", "to": "gb_t2", "event": "CONDITIONAL_2" },
+        { "id": "gb_e3", "from": "gb_t2", "to": "gb_t3", "event": "CONDITIONAL_3" },
+        { "id": "gb_e4", "from": "gb_t3", "to": "gb_rec", "event": "STORE" },
+        { "id": "gb_e5", "from": "gb_rec", "to": "gb_t1", "event": "NEXT_SWEEP" }
+      ],
+      "initialStateId": "gb_init",
+      "finalStateIds": ["gb_rec"]
+    },
+
+    "compiler_pipeline": {
+      "label": "Compilation Pipeline",
+      "category": "Compilers",
+      "description": "Multi-phase compiler pipeline: lexical analysis, parsing, type checking, optimization, and code generation. Each phase can fail, producing diagnostics.",
+      "nodes": [
+        { "id": "cp_src", "name": "SOURCE", "x": 80, "y": 180 },
+        { "id": "cp_lex", "name": "LEXING", "x": 200, "y": 100 },
+        { "id": "cp_parse", "name": "PARSING", "x": 320, "y": 100 },
+        { "id": "cp_type", "name": "TYPE_CHECK", "x": 440, "y": 100 },
+        { "id": "cp_opt", "name": "OPTIMIZING", "x": 520, "y": 220 },
+        { "id": "cp_gen", "name": "CODE_GEN", "x": 400, "y": 320 },
+        { "id": "cp_done", "name": "COMPILED", "x": 240, "y": 320 },
+        { "id": "cp_err", "name": "ERROR", "x": 80, "y": 320 }
+      ],
+      "edges": [
+        { "id": "cp_e1", "from": "cp_src", "to": "cp_lex", "event": "COMPILE" },
+        { "id": "cp_e2", "from": "cp_lex", "to": "cp_parse", "event": "TOKENS_READY" },
+        { "id": "cp_e3", "from": "cp_parse", "to": "cp_type", "event": "AST_READY" },
+        { "id": "cp_e4", "from": "cp_type", "to": "cp_opt", "event": "TYPES_OK" },
+        { "id": "cp_e5", "from": "cp_opt", "to": "cp_gen", "event": "OPTIMIZED" },
+        { "id": "cp_e6", "from": "cp_gen", "to": "cp_done", "event": "EMIT" },
+        { "id": "cp_e7", "from": "cp_lex", "to": "cp_err", "event": "LEX_ERROR" },
+        { "id": "cp_e8", "from": "cp_parse", "to": "cp_err", "event": "PARSE_ERROR" },
+        { "id": "cp_e9", "from": "cp_type", "to": "cp_err", "event": "TYPE_ERROR" }
+      ],
+      "initialStateId": "cp_src",
+      "finalStateIds": ["cp_done"]
+    },
+    "compiler_lexer": {
+      "label": "Lexer States",
+      "category": "Compilers",
+      "description": "Lexer (tokenizer) state machine. Reads characters and transitions between modes: identifier, number, string literal, comment. Each accepting state emits a token.",
+      "nodes": [
+        { "id": "lx_start", "name": "START", "x": 80, "y": 200 },
+        { "id": "lx_ident", "name": "IN_IDENT", "x": 240, "y": 100 },
+        { "id": "lx_num", "name": "IN_NUMBER", "x": 240, "y": 300 },
+        { "id": "lx_str", "name": "IN_STRING", "x": 440, "y": 100 },
+        { "id": "lx_comm", "name": "IN_COMMENT", "x": 440, "y": 300 },
+        { "id": "lx_tok", "name": "TOKEN_EMIT", "x": 560, "y": 200 },
+        { "id": "lx_err", "name": "LEX_ERROR", "x": 80, "y": 360 }
+      ],
+      "edges": [
+        { "id": "lx_e1", "from": "lx_start", "to": "lx_ident", "event": "LETTER" },
+        { "id": "lx_e2", "from": "lx_start", "to": "lx_num", "event": "DIGIT" },
+        { "id": "lx_e3", "from": "lx_start", "to": "lx_str", "event": "QUOTE" },
+        { "id": "lx_e4", "from": "lx_start", "to": "lx_comm", "event": "SLASH_SLASH" },
+        { "id": "lx_e5", "from": "lx_ident", "to": "lx_ident", "event": "LETTER" },
+        { "id": "lx_e6", "from": "lx_ident", "to": "lx_ident", "event": "DIGIT" },
+        { "id": "lx_e7", "from": "lx_ident", "to": "lx_tok", "event": "DELIMITER" },
+        { "id": "lx_e8", "from": "lx_num", "to": "lx_num", "event": "DIGIT" },
+        { "id": "lx_e9", "from": "lx_num", "to": "lx_tok", "event": "DELIMITER" },
+        { "id": "lx_e10", "from": "lx_str", "to": "lx_str", "event": "CHAR" },
+        { "id": "lx_e11", "from": "lx_str", "to": "lx_tok", "event": "CLOSE_QUOTE" },
+        { "id": "lx_e12", "from": "lx_comm", "to": "lx_comm", "event": "CHAR" },
+        { "id": "lx_e13", "from": "lx_comm", "to": "lx_start", "event": "NEWLINE" },
+        { "id": "lx_e14", "from": "lx_tok", "to": "lx_start", "event": "NEXT" },
+        { "id": "lx_e15", "from": "lx_start", "to": "lx_err", "event": "INVALID" },
+        { "id": "lx_e16", "from": "lx_start", "to": "lx_tok", "event": "WHITESPACE" }
+      ],
+      "initialStateId": "lx_start",
+      "finalStateIds": ["lx_tok"]
+    },
+    "compiler_gc": {
+      "label": "Garbage Collector (Mark-Sweep)",
+      "category": "Compilers",
+      "description": "Mark-and-sweep garbage collection cycle. The mutator runs, allocation triggers GC, roots are scanned, the heap is marked, unreachable objects are swept, and the mutator resumes.",
+      "nodes": [
+        { "id": "gc_mut", "name": "MUTATOR", "x": 100, "y": 180 },
+        { "id": "gc_trig", "name": "GC_TRIGGERED", "x": 260, "y": 100 },
+        { "id": "gc_mark", "name": "MARKING", "x": 420, "y": 100 },
+        { "id": "gc_sweep", "name": "SWEEPING", "x": 520, "y": 220 },
+        { "id": "gc_fin", "name": "FINALIZING", "x": 380, "y": 320 },
+        { "id": "gc_resume", "name": "RESUMED", "x": 180, "y": 320 }
+      ],
+      "edges": [
+        { "id": "gc_e1", "from": "gc_mut", "to": "gc_trig", "event": "ALLOC_THRESHOLD" },
+        { "id": "gc_e2", "from": "gc_trig", "to": "gc_mark", "event": "SCAN_ROOTS" },
+        { "id": "gc_e3", "from": "gc_mark", "to": "gc_sweep", "event": "MARK_COMPLETE" },
+        { "id": "gc_e4", "from": "gc_sweep", "to": "gc_fin", "event": "SWEEP_COMPLETE" },
+        { "id": "gc_e5", "from": "gc_fin", "to": "gc_resume", "event": "RUN_FINALIZERS" },
+        { "id": "gc_e6", "from": "gc_resume", "to": "gc_mut", "event": "RESUME_MUTATOR" }
+      ],
+      "initialStateId": "gc_mut",
+      "finalStateIds": ["gc_mut"]
+    },
+    "compiler_shiftReduce": {
+      "label": "Shift-Reduce Parser",
+      "category": "Compilers",
+      "description": "Bottom-up (LR) parser actions: shift pushes a token onto the stack, reduce applies a grammar rule, accept terminates on valid input, error on invalid input. Conflicts (shift-reduce, reduce-reduce) indicate grammar ambiguity.",
+      "nodes": [
+        { "id": "sr_init", "name": "INIT", "x": 100, "y": 200 },
+        { "id": "sr_shift", "name": "SHIFT", "x": 280, "y": 120 },
+        { "id": "sr_reduce", "name": "REDUCE", "x": 460, "y": 120 },
+        { "id": "sr_goto", "name": "GOTO", "x": 460, "y": 280 },
+        { "id": "sr_accept", "name": "ACCEPT", "x": 280, "y": 340 },
+        { "id": "sr_error", "name": "ERROR", "x": 100, "y": 340 }
+      ],
+      "edges": [
+        { "id": "sr_e1", "from": "sr_init", "to": "sr_shift", "event": "READ_TOKEN" },
+        { "id": "sr_e2", "from": "sr_shift", "to": "sr_shift", "event": "SHIFT" },
+        { "id": "sr_e3", "from": "sr_shift", "to": "sr_reduce", "event": "REDUCE" },
+        { "id": "sr_e4", "from": "sr_reduce", "to": "sr_goto", "event": "APPLY_RULE" },
+        { "id": "sr_e5", "from": "sr_goto", "to": "sr_shift", "event": "PUSH_STATE" },
+        { "id": "sr_e6", "from": "sr_shift", "to": "sr_accept", "event": "EOF" },
+        { "id": "sr_e7", "from": "sr_shift", "to": "sr_error", "event": "INVALID" },
+        { "id": "sr_e8", "from": "sr_reduce", "to": "sr_accept", "event": "START_RULE" }
+      ],
+      "initialStateId": "sr_init",
+      "finalStateIds": ["sr_accept"]
+    },
+
+    "cicd_pipeline": {
+      "label": "CI/CD Pipeline",
+      "category": "DevOps",
+      "description": "Continuous integration and deployment pipeline. Commit triggers build, which triggers test, which gates deployment. Failures at any stage halt the pipeline. Rollback from production returns to a stable state.",
+      "nodes": [
+        { "id": "ci_commit", "name": "COMMITTED", "x": 80, "y": 180 },
+        { "id": "ci_build", "name": "BUILDING", "x": 220, "y": 100 },
+        { "id": "ci_test", "name": "TESTING", "x": 380, "y": 100 },
+        { "id": "ci_stage", "name": "STAGING", "x": 520, "y": 180 },
+        { "id": "ci_prod", "name": "PRODUCTION", "x": 400, "y": 300 },
+        { "id": "ci_fail", "name": "FAILED", "x": 160, "y": 320 },
+        { "id": "ci_roll", "name": "ROLLED_BACK", "x": 520, "y": 340 }
+      ],
+      "edges": [
+        { "id": "ci_e1", "from": "ci_commit", "to": "ci_build", "event": "PUSH" },
+        { "id": "ci_e2", "from": "ci_build", "to": "ci_test", "event": "BUILD_OK" },
+        { "id": "ci_e3", "from": "ci_build", "to": "ci_fail", "event": "BUILD_FAIL" },
+        { "id": "ci_e4", "from": "ci_test", "to": "ci_stage", "event": "TESTS_PASS" },
+        { "id": "ci_e5", "from": "ci_test", "to": "ci_fail", "event": "TESTS_FAIL" },
+        { "id": "ci_e6", "from": "ci_stage", "to": "ci_prod", "event": "APPROVE" },
+        { "id": "ci_e7", "from": "ci_prod", "to": "ci_roll", "event": "ROLLBACK" },
+        { "id": "ci_e8", "from": "ci_fail", "to": "ci_commit", "event": "FIX_AND_PUSH" }
+      ],
+      "initialStateId": "ci_commit",
+      "finalStateIds": ["ci_prod"]
+    }
+  }
+}

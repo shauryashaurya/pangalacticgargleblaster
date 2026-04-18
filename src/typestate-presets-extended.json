@@ -1,0 +1,1082 @@
+{
+  "version": "1.0.0",
+  "format": "typestate-fsm",
+  "description": "Extended Typestate preset collection. Domain-specific machines for IFRS 17, IFRS 9, MCMC, and Bayesian analysis. Designed for teaching complex systems to new audiences.",
+  "machines": {
+
+    "ifrs17_reinsurance": {
+      "label": "IFRS 17: Reinsurance Held", "category": "IFRS 17",
+      "description": "Reinsurance contract from ceding company perspective. Mirrors direct insurance lifecycle but with net cost recovery logic and different gain/loss recognition timing.",
+      "nodes": [
+        {"id":"r17rh_u","name":"UNRECOGNIZED","x":80,"y":200},
+        {"id":"r17rh_r","name":"RECOGNIZED","x":220,"y":120},
+        {"id":"r17rh_a","name":"ASSET_MEASURE","x":380,"y":120},
+        {"id":"r17rh_g","name":"GAIN_ON_PURCHASE","x":380,"y":260},
+        {"id":"r17rh_n","name":"NET_COST_RECOVERY","x":540,"y":200},
+        {"id":"r17rh_d","name":"DERECOGNIZED","x":540,"y":360}
+      ],
+      "edges": [
+        {"id":"r17rh_e1","from":"r17rh_u","to":"r17rh_r","event":"COVERAGE_BEGINS"},
+        {"id":"r17rh_e2","from":"r17rh_r","to":"r17rh_a","event":"UNDERLYING_PROFITABLE"},
+        {"id":"r17rh_e3","from":"r17rh_r","to":"r17rh_g","event":"UNDERLYING_ONEROUS"},
+        {"id":"r17rh_e4","from":"r17rh_a","to":"r17rh_n","event":"MEASURE"},
+        {"id":"r17rh_e5","from":"r17rh_g","to":"r17rh_n","event":"MEASURE"},
+        {"id":"r17rh_e6","from":"r17rh_n","to":"r17rh_n","event":"PERIOD_END"},
+        {"id":"r17rh_e7","from":"r17rh_n","to":"r17rh_d","event":"EXPIRE"},
+        {"id":"r17rh_e8","from":"r17rh_n","to":"r17rh_d","event":"COMMUTE"}
+      ],
+      "initialStateId":"r17rh_u","finalStateIds":["r17rh_d"]
+    },
+    "ifrs17_investmentComponent": {
+      "label": "IFRS 17: Investment Component", "category": "IFRS 17",
+      "description": "Determining whether a contract has a distinct investment component that must be separated. If distinct, it is excluded from insurance revenue and measured under IFRS 9.",
+      "nodes": [
+        {"id":"r17ic_n","name":"NEW_CONTRACT","x":80,"y":200},
+        {"id":"r17ic_t","name":"TESTING","x":220,"y":200},
+        {"id":"r17ic_d","name":"DISTINCT","x":400,"y":120},
+        {"id":"r17ic_nd","name":"NOT_DISTINCT","x":400,"y":280},
+        {"id":"r17ic_sep","name":"SEPARATED_IFRS9","x":560,"y":120},
+        {"id":"r17ic_bun","name":"BUNDLED_IFRS17","x":560,"y":280}
+      ],
+      "edges": [
+        {"id":"r17ic_e1","from":"r17ic_n","to":"r17ic_t","event":"ASSESS"},
+        {"id":"r17ic_e2","from":"r17ic_t","to":"r17ic_d","event":"HIGHLY_INTERRELATED_NO"},
+        {"id":"r17ic_e3","from":"r17ic_t","to":"r17ic_nd","event":"HIGHLY_INTERRELATED_YES"},
+        {"id":"r17ic_e4","from":"r17ic_d","to":"r17ic_sep","event":"SEPARATE"},
+        {"id":"r17ic_e5","from":"r17ic_nd","to":"r17ic_bun","event":"BUNDLE"}
+      ],
+      "initialStateId":"r17ic_n","finalStateIds":["r17ic_sep","r17ic_bun"]
+    },
+    "ifrs17_riskAdjustment": {
+      "label": "IFRS 17: Risk Adjustment", "category": "IFRS 17",
+      "description": "The risk adjustment for non-financial risk compensates for uncertainty in cash flows. Computed each period, released as risk expires, and re-estimated on new information.",
+      "nodes": [
+        {"id":"r17ra_i","name":"INITIAL_ESTIMATE","x":100,"y":200},
+        {"id":"r17ra_c","name":"CURRENT_ESTIMATE","x":280,"y":120},
+        {"id":"r17ra_rel","name":"RELEASING","x":440,"y":120},
+        {"id":"r17ra_re","name":"RE_ESTIMATING","x":440,"y":280},
+        {"id":"r17ra_z","name":"FULLY_RELEASED","x":580,"y":200}
+      ],
+      "edges": [
+        {"id":"r17ra_e1","from":"r17ra_i","to":"r17ra_c","event":"INITIAL_CALC"},
+        {"id":"r17ra_e2","from":"r17ra_c","to":"r17ra_rel","event":"PERIOD_END"},
+        {"id":"r17ra_e3","from":"r17ra_rel","to":"r17ra_c","event":"RISK_REMAINS"},
+        {"id":"r17ra_e4","from":"r17ra_rel","to":"r17ra_z","event":"COVERAGE_COMPLETE"},
+        {"id":"r17ra_e5","from":"r17ra_c","to":"r17ra_re","event":"NEW_INFORMATION"},
+        {"id":"r17ra_e6","from":"r17ra_re","to":"r17ra_c","event":"UPDATED"}
+      ],
+      "initialStateId":"r17ra_i","finalStateIds":["r17ra_z"]
+    },
+    "ifrs17_transition": {
+      "label": "IFRS 17: Transition Approaches", "category": "IFRS 17",
+      "description": "First-time adoption of IFRS 17: choose between full retrospective (ideal but often impracticable), modified retrospective, or fair value approach.",
+      "nodes": [
+        {"id":"r17tr_p","name":"PRE_IFRS17","x":80,"y":200},
+        {"id":"r17tr_a","name":"ASSESSING","x":220,"y":200},
+        {"id":"r17tr_fr","name":"FULL_RETRO","x":420,"y":80},
+        {"id":"r17tr_mr","name":"MODIFIED_RETRO","x":420,"y":200},
+        {"id":"r17tr_fv","name":"FAIR_VALUE","x":420,"y":320},
+        {"id":"r17tr_d","name":"DAY_ONE_BALANCE","x":580,"y":200}
+      ],
+      "edges": [
+        {"id":"r17tr_e1","from":"r17tr_p","to":"r17tr_a","event":"TRANSITION_DATE"},
+        {"id":"r17tr_e2","from":"r17tr_a","to":"r17tr_fr","event":"DATA_AVAILABLE"},
+        {"id":"r17tr_e3","from":"r17tr_a","to":"r17tr_mr","event":"PARTIAL_DATA"},
+        {"id":"r17tr_e4","from":"r17tr_a","to":"r17tr_fv","event":"IMPRACTICABLE"},
+        {"id":"r17tr_e5","from":"r17tr_fr","to":"r17tr_d","event":"COMPUTE_CSM"},
+        {"id":"r17tr_e6","from":"r17tr_mr","to":"r17tr_d","event":"COMPUTE_CSM"},
+        {"id":"r17tr_e7","from":"r17tr_fv","to":"r17tr_d","event":"COMPUTE_CSM"}
+      ],
+      "initialStateId":"r17tr_p","finalStateIds":["r17tr_d"]
+    },
+    "ifrs17_contractBoundary": {
+      "label": "IFRS 17: Contract Boundary", "category": "IFRS 17",
+      "description": "Determining which future cash flows belong within the contract boundary. Cash flows outside the boundary are treated as future contracts.",
+      "nodes": [
+        {"id":"r17cb_e","name":"EVALUATING","x":100,"y":200},
+        {"id":"r17cb_pr","name":"PRICING_REVIEW","x":260,"y":120},
+        {"id":"r17cb_rr","name":"RISK_REASSESS","x":260,"y":280},
+        {"id":"r17cb_in","name":"WITHIN_BOUNDARY","x":460,"y":120},
+        {"id":"r17cb_out","name":"OUTSIDE_BOUNDARY","x":460,"y":280}
+      ],
+      "edges": [
+        {"id":"r17cb_e1","from":"r17cb_e","to":"r17cb_pr","event":"CHECK_REPRICING"},
+        {"id":"r17cb_e2","from":"r17cb_e","to":"r17cb_rr","event":"CHECK_RISK"},
+        {"id":"r17cb_e3","from":"r17cb_pr","to":"r17cb_in","event":"PRICE_LOCKED"},
+        {"id":"r17cb_e4","from":"r17cb_pr","to":"r17cb_out","event":"CAN_REPRICE"},
+        {"id":"r17cb_e5","from":"r17cb_rr","to":"r17cb_in","event":"RISK_OF_PORTFOLIO"},
+        {"id":"r17cb_e6","from":"r17cb_rr","to":"r17cb_out","event":"RISK_INDIVIDUAL"}
+      ],
+      "initialStateId":"r17cb_e","finalStateIds":["r17cb_in","r17cb_out"]
+    },
+    "ifrs17_revenueRecog": {
+      "label": "IFRS 17: Revenue Recognition", "category": "IFRS 17",
+      "description": "Insurance revenue is recognized as coverage units are provided, not when premium is received. Revenue = expected claims + risk adjustment release + CSM release.",
+      "nodes": [
+        {"id":"r17rv_p","name":"PREMIUM_RECEIVED","x":80,"y":200},
+        {"id":"r17rv_l","name":"LRC_ALLOCATED","x":240,"y":120},
+        {"id":"r17rv_cu","name":"COVERAGE_PROVIDED","x":400,"y":120},
+        {"id":"r17rv_r","name":"REVENUE_RECOGNIZED","x":540,"y":200},
+        {"id":"r17rv_cl","name":"CLAIMS_INCURRED","x":400,"y":300},
+        {"id":"r17rv_s","name":"SERVICE_COMPLETE","x":540,"y":360}
+      ],
+      "edges": [
+        {"id":"r17rv_e1","from":"r17rv_p","to":"r17rv_l","event":"ALLOCATE_TO_LRC"},
+        {"id":"r17rv_e2","from":"r17rv_l","to":"r17rv_cu","event":"PROVIDE_COVERAGE"},
+        {"id":"r17rv_e3","from":"r17rv_cu","to":"r17rv_r","event":"RELEASE_CSM"},
+        {"id":"r17rv_e4","from":"r17rv_cu","to":"r17rv_cl","event":"CLAIM_EVENT"},
+        {"id":"r17rv_e5","from":"r17rv_cl","to":"r17rv_r","event":"EXPENSE_RECOGNIZED"},
+        {"id":"r17rv_e6","from":"r17rv_r","to":"r17rv_cu","event":"NEXT_PERIOD"},
+        {"id":"r17rv_e7","from":"r17rv_r","to":"r17rv_s","event":"ALL_COVERAGE_DONE"}
+      ],
+      "initialStateId":"r17rv_p","finalStateIds":["r17rv_s"]
+    },
+    "ifrs17_annualCohorts": {
+      "label": "IFRS 17: Annual Cohort Grouping", "category": "IFRS 17",
+      "description": "Contracts must be grouped into annual cohorts (issued within one year). Within each cohort, three profitability groups: onerous, no significant risk of becoming onerous, and remaining.",
+      "nodes": [
+        {"id":"r17ac_n","name":"NEW_CONTRACTS","x":80,"y":200},
+        {"id":"r17ac_y","name":"YEAR_ASSIGNED","x":220,"y":200},
+        {"id":"r17ac_t","name":"TESTING_PROFIT","x":380,"y":200},
+        {"id":"r17ac_on","name":"ONEROUS_GROUP","x":540,"y":100},
+        {"id":"r17ac_ok","name":"NO_RISK_GROUP","x":540,"y":200},
+        {"id":"r17ac_rm","name":"REMAINING_GROUP","x":540,"y":300}
+      ],
+      "edges": [
+        {"id":"r17ac_e1","from":"r17ac_n","to":"r17ac_y","event":"ASSIGN_COHORT_YEAR"},
+        {"id":"r17ac_e2","from":"r17ac_y","to":"r17ac_t","event":"TEST_PROFITABILITY"},
+        {"id":"r17ac_e3","from":"r17ac_t","to":"r17ac_on","event":"ONEROUS_AT_INCEPTION"},
+        {"id":"r17ac_e4","from":"r17ac_t","to":"r17ac_ok","event":"NO_SIGNIFICANT_RISK"},
+        {"id":"r17ac_e5","from":"r17ac_t","to":"r17ac_rm","event":"REMAINING"}
+      ],
+      "initialStateId":"r17ac_n","finalStateIds":["r17ac_on","r17ac_ok","r17ac_rm"]
+    },
+    "ifrs17_discountRate": {
+      "label": "IFRS 17: Discount Rate", "category": "IFRS 17",
+      "description": "Two approaches to determining discount rates: bottom-up (risk-free + illiquidity premium) and top-down (asset yield - credit risk). Both should produce equivalent results.",
+      "nodes": [
+        {"id":"r17dr_s","name":"SELECT_APPROACH","x":80,"y":200},
+        {"id":"r17dr_bu","name":"BOTTOM_UP","x":250,"y":120},
+        {"id":"r17dr_td","name":"TOP_DOWN","x":250,"y":280},
+        {"id":"r17dr_rf","name":"RISK_FREE_CURVE","x":420,"y":60},
+        {"id":"r17dr_ip","name":"ADD_ILLIQUIDITY","x":560,"y":120},
+        {"id":"r17dr_ay","name":"ASSET_YIELD","x":420,"y":340},
+        {"id":"r17dr_cr","name":"REMOVE_CREDIT","x":560,"y":280},
+        {"id":"r17dr_f","name":"RATE_DETERMINED","x":560,"y":200}
+      ],
+      "edges": [
+        {"id":"r17dr_e1","from":"r17dr_s","to":"r17dr_bu","event":"CHOOSE_BOTTOM_UP"},
+        {"id":"r17dr_e2","from":"r17dr_s","to":"r17dr_td","event":"CHOOSE_TOP_DOWN"},
+        {"id":"r17dr_e3","from":"r17dr_bu","to":"r17dr_rf","event":"GET_RISK_FREE"},
+        {"id":"r17dr_e4","from":"r17dr_rf","to":"r17dr_ip","event":"ADD_PREMIUM"},
+        {"id":"r17dr_e5","from":"r17dr_ip","to":"r17dr_f","event":"FINALIZE"},
+        {"id":"r17dr_e6","from":"r17dr_td","to":"r17dr_ay","event":"GET_ASSET_YIELD"},
+        {"id":"r17dr_e7","from":"r17dr_ay","to":"r17dr_cr","event":"STRIP_CREDIT"},
+        {"id":"r17dr_e8","from":"r17dr_cr","to":"r17dr_f","event":"FINALIZE"}
+      ],
+      "initialStateId":"r17dr_s","finalStateIds":["r17dr_f"]
+    },
+    "ifrs17_claimsDev": {
+      "label": "IFRS 17: Claims Development", "category": "IFRS 17",
+      "description": "Incurred claims lifecycle from event occurrence through reporting, reserving, adjustment, and settlement. The Liability for Incurred Claims (LIC) tracks this.",
+      "nodes": [
+        {"id":"r17cd_o","name":"OCCURRED","x":80,"y":200},
+        {"id":"r17cd_r","name":"REPORTED","x":220,"y":120},
+        {"id":"r17cd_ib","name":"IBNR","x":220,"y":280},
+        {"id":"r17cd_rv","name":"RESERVED","x":380,"y":200},
+        {"id":"r17cd_a","name":"ADJUSTING","x":500,"y":120},
+        {"id":"r17cd_s","name":"SETTLED","x":580,"y":280}
+      ],
+      "edges": [
+        {"id":"r17cd_e1","from":"r17cd_o","to":"r17cd_r","event":"REPORT_CLAIM"},
+        {"id":"r17cd_e2","from":"r17cd_o","to":"r17cd_ib","event":"NOT_YET_REPORTED"},
+        {"id":"r17cd_e3","from":"r17cd_ib","to":"r17cd_r","event":"LATE_REPORT"},
+        {"id":"r17cd_e4","from":"r17cd_r","to":"r17cd_rv","event":"SET_RESERVE"},
+        {"id":"r17cd_e5","from":"r17cd_rv","to":"r17cd_a","event":"NEW_INFO"},
+        {"id":"r17cd_e6","from":"r17cd_a","to":"r17cd_rv","event":"ADJUST_RESERVE"},
+        {"id":"r17cd_e7","from":"r17cd_rv","to":"r17cd_s","event":"PAY_CLAIM"}
+      ],
+      "initialStateId":"r17cd_o","finalStateIds":["r17cd_s"]
+    },
+    "ifrs17_experienceAdj": {
+      "label": "IFRS 17: Experience Adjustments", "category": "IFRS 17",
+      "description": "Differences between expected and actual cash flows. Premium experience adjustments adjust revenue. Claims experience adjustments adjust the fulfilment cash flows.",
+      "nodes": [
+        {"id":"r17ea_e","name":"EXPECTED_CF","x":100,"y":200},
+        {"id":"r17ea_a","name":"ACTUAL_CF","x":260,"y":200},
+        {"id":"r17ea_c","name":"COMPARING","x":400,"y":200},
+        {"id":"r17ea_fav","name":"FAVORABLE","x":540,"y":120},
+        {"id":"r17ea_unf","name":"UNFAVORABLE","x":540,"y":280},
+        {"id":"r17ea_adj","name":"ADJUSTED","x":400,"y":360}
+      ],
+      "edges": [
+        {"id":"r17ea_e1","from":"r17ea_e","to":"r17ea_a","event":"PERIOD_END"},
+        {"id":"r17ea_e2","from":"r17ea_a","to":"r17ea_c","event":"COMPARE"},
+        {"id":"r17ea_e3","from":"r17ea_c","to":"r17ea_fav","event":"ACTUAL_BETTER"},
+        {"id":"r17ea_e4","from":"r17ea_c","to":"r17ea_unf","event":"ACTUAL_WORSE"},
+        {"id":"r17ea_e5","from":"r17ea_fav","to":"r17ea_adj","event":"ADJUST_CSM"},
+        {"id":"r17ea_e6","from":"r17ea_unf","to":"r17ea_adj","event":"ADJUST_CSM"},
+        {"id":"r17ea_e7","from":"r17ea_adj","to":"r17ea_e","event":"NEXT_PERIOD"}
+      ],
+      "initialStateId":"r17ea_e","finalStateIds":["r17ea_adj"]
+    },
+    "ifrs17_presentation": {
+      "label": "IFRS 17: P&L Presentation", "category": "IFRS 17",
+      "description": "How insurance results flow through the income statement: insurance revenue, insurance service expense, insurance finance income/expense.",
+      "nodes": [
+        {"id":"r17pl_s","name":"START_PERIOD","x":80,"y":200},
+        {"id":"r17pl_r","name":"INSURANCE_REVENUE","x":240,"y":100},
+        {"id":"r17pl_e","name":"SERVICE_EXPENSE","x":240,"y":300},
+        {"id":"r17pl_sr","name":"SERVICE_RESULT","x":420,"y":200},
+        {"id":"r17pl_fi","name":"FINANCE_INCOME","x":540,"y":100},
+        {"id":"r17pl_fe","name":"FINANCE_EXPENSE","x":540,"y":300},
+        {"id":"r17pl_n","name":"NET_RESULT","x":580,"y":200}
+      ],
+      "edges": [
+        {"id":"r17pl_e1","from":"r17pl_s","to":"r17pl_r","event":"COMPUTE_REVENUE"},
+        {"id":"r17pl_e2","from":"r17pl_s","to":"r17pl_e","event":"COMPUTE_EXPENSE"},
+        {"id":"r17pl_e3","from":"r17pl_r","to":"r17pl_sr","event":"AGGREGATE"},
+        {"id":"r17pl_e4","from":"r17pl_e","to":"r17pl_sr","event":"AGGREGATE"},
+        {"id":"r17pl_e5","from":"r17pl_sr","to":"r17pl_fi","event":"ACCRETION"},
+        {"id":"r17pl_e6","from":"r17pl_sr","to":"r17pl_fe","event":"UNWIND_DISCOUNT"},
+        {"id":"r17pl_e7","from":"r17pl_fi","to":"r17pl_n","event":"FINALIZE"},
+        {"id":"r17pl_e8","from":"r17pl_fe","to":"r17pl_n","event":"FINALIZE"}
+      ],
+      "initialStateId":"r17pl_s","finalStateIds":["r17pl_n"]
+    },
+    "ifrs17_interimReport": {
+      "label": "IFRS 17: Interim Reporting", "category": "IFRS 17",
+      "description": "Handling interim (quarterly) vs annual reporting. Interim periods use estimates that may be trued-up at year-end. Locked-in rates and experience adjustments interact differently at interim.",
+      "nodes": [
+        {"id":"r17ir_y","name":"YEAR_START","x":80,"y":200},
+        {"id":"r17ir_q","name":"INTERIM_PERIOD","x":220,"y":120},
+        {"id":"r17ir_e","name":"ESTIMATING","x":360,"y":120},
+        {"id":"r17ir_p","name":"INTERIM_PUBLISHED","x":500,"y":120},
+        {"id":"r17ir_a","name":"ANNUAL_CLOSE","x":360,"y":300},
+        {"id":"r17ir_t","name":"TRUE_UP","x":500,"y":300},
+        {"id":"r17ir_f","name":"ANNUAL_PUBLISHED","x":580,"y":200}
+      ],
+      "edges": [
+        {"id":"r17ir_e1","from":"r17ir_y","to":"r17ir_q","event":"QUARTER_END"},
+        {"id":"r17ir_e2","from":"r17ir_q","to":"r17ir_e","event":"ESTIMATE_FULFILMENT"},
+        {"id":"r17ir_e3","from":"r17ir_e","to":"r17ir_p","event":"PUBLISH"},
+        {"id":"r17ir_e4","from":"r17ir_p","to":"r17ir_q","event":"NEXT_QUARTER"},
+        {"id":"r17ir_e5","from":"r17ir_p","to":"r17ir_a","event":"YEAR_END"},
+        {"id":"r17ir_e6","from":"r17ir_a","to":"r17ir_t","event":"TRUE_UP_ESTIMATES"},
+        {"id":"r17ir_e7","from":"r17ir_t","to":"r17ir_f","event":"PUBLISH_ANNUAL"}
+      ],
+      "initialStateId":"r17ir_y","finalStateIds":["r17ir_f"]
+    },
+
+    "ifrs9_loanModification": {
+      "label": "IFRS 9: Loan Modification", "category": "IFRS 9",
+      "description": "When loan terms change: assess whether modification is substantial (derecognize and recognize new) or non-substantial (adjust carrying amount). The 10% test on present value of cash flows is the key threshold.",
+      "nodes": [
+        {"id":"i9lm_o","name":"ORIGINAL_LOAN","x":80,"y":200},
+        {"id":"i9lm_a","name":"ASSESSING","x":220,"y":200},
+        {"id":"i9lm_s","name":"SUBSTANTIAL","x":400,"y":100},
+        {"id":"i9lm_ns","name":"NON_SUBSTANTIAL","x":400,"y":300},
+        {"id":"i9lm_dr","name":"DERECOG_OLD","x":540,"y":60},
+        {"id":"i9lm_rn","name":"RECOGNIZE_NEW","x":540,"y":160},
+        {"id":"i9lm_adj","name":"ADJUST_CARRYING","x":540,"y":300}
+      ],
+      "edges": [
+        {"id":"i9lm_e1","from":"i9lm_o","to":"i9lm_a","event":"TERMS_CHANGED"},
+        {"id":"i9lm_e2","from":"i9lm_a","to":"i9lm_s","event":"PV_DIFF_GT_10PCT"},
+        {"id":"i9lm_e3","from":"i9lm_a","to":"i9lm_ns","event":"PV_DIFF_LT_10PCT"},
+        {"id":"i9lm_e4","from":"i9lm_s","to":"i9lm_dr","event":"DERECOGNIZE"},
+        {"id":"i9lm_e5","from":"i9lm_dr","to":"i9lm_rn","event":"RECOGNIZE_AT_FV"},
+        {"id":"i9lm_e6","from":"i9lm_ns","to":"i9lm_adj","event":"RECALC_EIR"}
+      ],
+      "initialStateId":"i9lm_o","finalStateIds":["i9lm_rn","i9lm_adj"]
+    },
+    "ifrs9_derecognition": {
+      "label": "IFRS 9: Derecognition", "category": "IFRS 9",
+      "description": "The derecognition decision tree: have contractual rights expired? If not, has the entity transferred substantially all risks and rewards? If ambiguous, has it retained control?",
+      "nodes": [
+        {"id":"i9dr_a","name":"ASSESS","x":80,"y":200},
+        {"id":"i9dr_re","name":"RIGHTS_EXPIRED","x":240,"y":100},
+        {"id":"i9dr_tr","name":"TRANSFER_TEST","x":240,"y":280},
+        {"id":"i9dr_rr","name":"RISK_REWARD_TEST","x":400,"y":200},
+        {"id":"i9dr_ct","name":"CONTROL_TEST","x":540,"y":200},
+        {"id":"i9dr_d","name":"DERECOGNIZE","x":540,"y":80},
+        {"id":"i9dr_k","name":"KEEP_ON_BOOKS","x":540,"y":320},
+        {"id":"i9dr_ci","name":"CONTINUING_INVOLVE","x":400,"y":380}
+      ],
+      "edges": [
+        {"id":"i9dr_e1","from":"i9dr_a","to":"i9dr_re","event":"RIGHTS_CHECK"},
+        {"id":"i9dr_e2","from":"i9dr_re","to":"i9dr_d","event":"YES_EXPIRED"},
+        {"id":"i9dr_e3","from":"i9dr_re","to":"i9dr_tr","event":"NOT_EXPIRED"},
+        {"id":"i9dr_e4","from":"i9dr_tr","to":"i9dr_rr","event":"TRANSFERRED"},
+        {"id":"i9dr_e5","from":"i9dr_tr","to":"i9dr_k","event":"NOT_TRANSFERRED"},
+        {"id":"i9dr_e6","from":"i9dr_rr","to":"i9dr_d","event":"ALL_RISKS_TRANSFERRED"},
+        {"id":"i9dr_e7","from":"i9dr_rr","to":"i9dr_k","event":"ALL_RISKS_RETAINED"},
+        {"id":"i9dr_e8","from":"i9dr_rr","to":"i9dr_ct","event":"NEITHER"},
+        {"id":"i9dr_e9","from":"i9dr_ct","to":"i9dr_d","event":"NO_CONTROL"},
+        {"id":"i9dr_e10","from":"i9dr_ct","to":"i9dr_ci","event":"RETAINS_CONTROL"}
+      ],
+      "initialStateId":"i9dr_a","finalStateIds":["i9dr_d","i9dr_k","i9dr_ci"]
+    },
+    "ifrs9_pdModel": {
+      "label": "IFRS 9: PD Model Lifecycle", "category": "IFRS 9",
+      "description": "Probability of Default model from development through validation, deployment, monitoring, and eventual recalibration or retirement.",
+      "nodes": [
+        {"id":"i9pd_d","name":"DEVELOPMENT","x":100,"y":200},
+        {"id":"i9pd_v","name":"VALIDATION","x":240,"y":120},
+        {"id":"i9pd_dp","name":"DEPLOYED","x":380,"y":120},
+        {"id":"i9pd_m","name":"MONITORING","x":500,"y":200},
+        {"id":"i9pd_rc","name":"RECALIBRATING","x":380,"y":320},
+        {"id":"i9pd_rt","name":"RETIRED","x":200,"y":320}
+      ],
+      "edges": [
+        {"id":"i9pd_e1","from":"i9pd_d","to":"i9pd_v","event":"SUBMIT"},
+        {"id":"i9pd_e2","from":"i9pd_v","to":"i9pd_dp","event":"APPROVED"},
+        {"id":"i9pd_e3","from":"i9pd_v","to":"i9pd_d","event":"REJECTED"},
+        {"id":"i9pd_e4","from":"i9pd_dp","to":"i9pd_m","event":"IN_PRODUCTION"},
+        {"id":"i9pd_e5","from":"i9pd_m","to":"i9pd_m","event":"PERFORM_OK"},
+        {"id":"i9pd_e6","from":"i9pd_m","to":"i9pd_rc","event":"DRIFT_DETECTED"},
+        {"id":"i9pd_e7","from":"i9pd_rc","to":"i9pd_v","event":"RECALIBRATED"},
+        {"id":"i9pd_e8","from":"i9pd_m","to":"i9pd_rt","event":"OBSOLETE"}
+      ],
+      "initialStateId":"i9pd_d","finalStateIds":["i9pd_rt"]
+    },
+    "ifrs9_forwardLooking": {
+      "label": "IFRS 9: Forward-Looking Overlay", "category": "IFRS 9",
+      "description": "Incorporating forward-looking macroeconomic information into ECL. Define scenarios, assign probabilities, compute scenario-weighted ECL, apply management overlay if needed.",
+      "nodes": [
+        {"id":"i9fl_b","name":"BASE_ECL","x":80,"y":200},
+        {"id":"i9fl_s","name":"SCENARIOS_DEFINED","x":240,"y":120},
+        {"id":"i9fl_w","name":"WEIGHTING","x":400,"y":120},
+        {"id":"i9fl_c","name":"WEIGHTED_ECL","x":520,"y":200},
+        {"id":"i9fl_o","name":"OVERLAY_REVIEW","x":400,"y":300},
+        {"id":"i9fl_f","name":"FINAL_ECL","x":520,"y":360}
+      ],
+      "edges": [
+        {"id":"i9fl_e1","from":"i9fl_b","to":"i9fl_s","event":"DEFINE_SCENARIOS"},
+        {"id":"i9fl_e2","from":"i9fl_s","to":"i9fl_w","event":"ASSIGN_PROBS"},
+        {"id":"i9fl_e3","from":"i9fl_w","to":"i9fl_c","event":"COMPUTE_WEIGHTED"},
+        {"id":"i9fl_e4","from":"i9fl_c","to":"i9fl_o","event":"REVIEW_NEEDED"},
+        {"id":"i9fl_e5","from":"i9fl_c","to":"i9fl_f","event":"NO_OVERLAY"},
+        {"id":"i9fl_e6","from":"i9fl_o","to":"i9fl_f","event":"APPLY_OVERLAY"}
+      ],
+      "initialStateId":"i9fl_b","finalStateIds":["i9fl_f"]
+    },
+    "ifrs9_day1PL": {
+      "label": "IFRS 9: Day-1 Profit/Loss", "category": "IFRS 9",
+      "description": "When fair value at initial recognition differs from transaction price. Day-1 gains are recognized only if fair value is evidenced by observable market data. Otherwise deferred.",
+      "nodes": [
+        {"id":"i9d1_t","name":"TRANSACTION","x":80,"y":200},
+        {"id":"i9d1_c","name":"COMPARING_FV_TP","x":240,"y":200},
+        {"id":"i9d1_eq","name":"FV_EQUALS_TP","x":420,"y":100},
+        {"id":"i9d1_df","name":"FV_DIFFERS","x":420,"y":300},
+        {"id":"i9d1_ob","name":"OBSERVABLE_MKT","x":560,"y":200},
+        {"id":"i9d1_no","name":"NOT_OBSERVABLE","x":560,"y":360},
+        {"id":"i9d1_rg","name":"RECOGNIZE_GAIN","x":560,"y":100},
+        {"id":"i9d1_dg","name":"DEFER_GAIN","x":560,"y":420}
+      ],
+      "edges": [
+        {"id":"i9d1_e1","from":"i9d1_t","to":"i9d1_c","event":"INITIAL_RECOG"},
+        {"id":"i9d1_e2","from":"i9d1_c","to":"i9d1_eq","event":"NO_DIFFERENCE"},
+        {"id":"i9d1_e3","from":"i9d1_c","to":"i9d1_df","event":"DIFFERENCE_EXISTS"},
+        {"id":"i9d1_e4","from":"i9d1_df","to":"i9d1_ob","event":"CHECK_OBSERVABILITY"},
+        {"id":"i9d1_e5","from":"i9d1_ob","to":"i9d1_rg","event":"LEVEL_1_OR_2"},
+        {"id":"i9d1_e6","from":"i9d1_df","to":"i9d1_no","event":"LEVEL_3_ONLY"},
+        {"id":"i9d1_e7","from":"i9d1_no","to":"i9d1_dg","event":"DEFER"}
+      ],
+      "initialStateId":"i9d1_t","finalStateIds":["i9d1_eq","i9d1_rg","i9d1_dg"]
+    },
+    "ifrs9_poci": {
+      "label": "IFRS 9: POCI Instruments", "category": "IFRS 9",
+      "description": "Purchased or originated credit-impaired instruments. These start in Stage 3 equivalent but use credit-adjusted EIR. Only cumulative changes in lifetime ECL after purchase are recognized.",
+      "nodes": [
+        {"id":"i9po_a","name":"ACQUIRED","x":100,"y":200},
+        {"id":"i9po_ca","name":"CREDIT_ADJ_EIR","x":260,"y":120},
+        {"id":"i9po_m","name":"MEASURING","x":420,"y":200},
+        {"id":"i9po_i","name":"IMPROVING","x":540,"y":100},
+        {"id":"i9po_w","name":"WORSENING","x":540,"y":300},
+        {"id":"i9po_d","name":"DERECOGNIZED","x":420,"y":380}
+      ],
+      "edges": [
+        {"id":"i9po_e1","from":"i9po_a","to":"i9po_ca","event":"COMPUTE_CA_EIR"},
+        {"id":"i9po_e2","from":"i9po_ca","to":"i9po_m","event":"INITIAL_ECL"},
+        {"id":"i9po_e3","from":"i9po_m","to":"i9po_i","event":"ECL_DECREASES"},
+        {"id":"i9po_e4","from":"i9po_m","to":"i9po_w","event":"ECL_INCREASES"},
+        {"id":"i9po_e5","from":"i9po_i","to":"i9po_m","event":"REMEASURE"},
+        {"id":"i9po_e6","from":"i9po_w","to":"i9po_m","event":"REMEASURE"},
+        {"id":"i9po_e7","from":"i9po_m","to":"i9po_d","event":"MATURITY"}
+      ],
+      "initialStateId":"i9po_a","finalStateIds":["i9po_d"]
+    },
+    "ifrs9_collectiveAssessment": {
+      "label": "IFRS 9: Collective vs Individual", "category": "IFRS 9",
+      "description": "Deciding between individual and collective impairment assessment. Large exposures get individual assessment. Homogeneous pools use collective models. Some get both.",
+      "nodes": [
+        {"id":"i9ca_p","name":"PORTFOLIO","x":80,"y":200},
+        {"id":"i9ca_s","name":"SEGMENTING","x":220,"y":200},
+        {"id":"i9ca_l","name":"LARGE_EXPOSURE","x":380,"y":100},
+        {"id":"i9ca_h","name":"HOMOGENEOUS_POOL","x":380,"y":300},
+        {"id":"i9ca_i","name":"INDIVIDUAL_ASSESS","x":540,"y":100},
+        {"id":"i9ca_c","name":"COLLECTIVE_ASSESS","x":540,"y":300},
+        {"id":"i9ca_f","name":"ECL_COMPUTED","x":540,"y":200}
+      ],
+      "edges": [
+        {"id":"i9ca_e1","from":"i9ca_p","to":"i9ca_s","event":"SEGMENT"},
+        {"id":"i9ca_e2","from":"i9ca_s","to":"i9ca_l","event":"SIGNIFICANT_EXPOSURE"},
+        {"id":"i9ca_e3","from":"i9ca_s","to":"i9ca_h","event":"RETAIL_POOL"},
+        {"id":"i9ca_e4","from":"i9ca_l","to":"i9ca_i","event":"ASSESS_INDIVIDUALLY"},
+        {"id":"i9ca_e5","from":"i9ca_h","to":"i9ca_c","event":"ASSESS_COLLECTIVELY"},
+        {"id":"i9ca_e6","from":"i9ca_i","to":"i9ca_f","event":"COMPUTE"},
+        {"id":"i9ca_e7","from":"i9ca_c","to":"i9ca_f","event":"COMPUTE"}
+      ],
+      "initialStateId":"i9ca_p","finalStateIds":["i9ca_f"]
+    },
+    "ifrs9_scenarioWeighting": {
+      "label": "IFRS 9: Macro Scenario Weighting", "category": "IFRS 9",
+      "description": "ECL must reflect probability-weighted outcomes. Typically 3-5 scenarios (base, optimistic, downturn, severe) with expert-assigned probabilities summing to 1.",
+      "nodes": [
+        {"id":"i9sw_d","name":"DEFINE_SCENARIOS","x":80,"y":200},
+        {"id":"i9sw_b","name":"BASE","x":240,"y":80},
+        {"id":"i9sw_o","name":"OPTIMISTIC","x":240,"y":180},
+        {"id":"i9sw_s","name":"DOWNTURN","x":240,"y":280},
+        {"id":"i9sw_v","name":"SEVERE","x":240,"y":380},
+        {"id":"i9sw_c","name":"COMPUTE_ECL_EACH","x":420,"y":200},
+        {"id":"i9sw_w","name":"APPLY_WEIGHTS","x":560,"y":200}
+      ],
+      "edges": [
+        {"id":"i9sw_e1","from":"i9sw_d","to":"i9sw_b","event":"DEFINE_BASE"},
+        {"id":"i9sw_e2","from":"i9sw_d","to":"i9sw_o","event":"DEFINE_OPTIMISTIC"},
+        {"id":"i9sw_e3","from":"i9sw_d","to":"i9sw_s","event":"DEFINE_DOWNTURN"},
+        {"id":"i9sw_e4","from":"i9sw_d","to":"i9sw_v","event":"DEFINE_SEVERE"},
+        {"id":"i9sw_e5","from":"i9sw_b","to":"i9sw_c","event":"RUN_MODEL"},
+        {"id":"i9sw_e6","from":"i9sw_o","to":"i9sw_c","event":"RUN_MODEL"},
+        {"id":"i9sw_e7","from":"i9sw_s","to":"i9sw_c","event":"RUN_MODEL"},
+        {"id":"i9sw_e8","from":"i9sw_v","to":"i9sw_c","event":"RUN_MODEL"},
+        {"id":"i9sw_e9","from":"i9sw_c","to":"i9sw_w","event":"WEIGHT_AND_SUM"}
+      ],
+      "initialStateId":"i9sw_d","finalStateIds":["i9sw_w"]
+    },
+    "ifrs9_eirMethod": {
+      "label": "IFRS 9: Effective Interest Rate", "category": "IFRS 9",
+      "description": "EIR method: compute rate that discounts future cash flows to carrying amount. Apply each period. Handle modifications by recalculating or using original EIR.",
+      "nodes": [
+        {"id":"i9ei_c","name":"COMPUTE_EIR","x":100,"y":200},
+        {"id":"i9ei_a","name":"ACCRUING","x":260,"y":120},
+        {"id":"i9ei_r","name":"RECOGNIZE_INTEREST","x":420,"y":120},
+        {"id":"i9ei_m","name":"MODIFICATION","x":420,"y":280},
+        {"id":"i9ei_rc","name":"RECALC_EIR","x":260,"y":280},
+        {"id":"i9ei_d","name":"MATURED","x":560,"y":200}
+      ],
+      "edges": [
+        {"id":"i9ei_e1","from":"i9ei_c","to":"i9ei_a","event":"PERIOD_START"},
+        {"id":"i9ei_e2","from":"i9ei_a","to":"i9ei_r","event":"APPLY_EIR"},
+        {"id":"i9ei_e3","from":"i9ei_r","to":"i9ei_a","event":"NEXT_PERIOD"},
+        {"id":"i9ei_e4","from":"i9ei_r","to":"i9ei_d","event":"FINAL_PAYMENT"},
+        {"id":"i9ei_e5","from":"i9ei_a","to":"i9ei_m","event":"TERMS_CHANGED"},
+        {"id":"i9ei_e6","from":"i9ei_m","to":"i9ei_rc","event":"NON_SUBSTANTIAL"},
+        {"id":"i9ei_e7","from":"i9ei_rc","to":"i9ei_a","event":"EIR_UPDATED"}
+      ],
+      "initialStateId":"i9ei_c","finalStateIds":["i9ei_d"]
+    },
+    "ifrs9_reclassification": {
+      "label": "IFRS 9: Reclassification", "category": "IFRS 9",
+      "description": "Reclassification between measurement categories is permitted only when the entity changes its business model. Reclassification is applied prospectively from the reclassification date.",
+      "nodes": [
+        {"id":"i9rc_c","name":"CURRENT_CLASS","x":80,"y":200},
+        {"id":"i9rc_b","name":"BIZ_MODEL_CHANGE","x":240,"y":200},
+        {"id":"i9rc_ac","name":"TO_AMORT_COST","x":440,"y":80},
+        {"id":"i9rc_oci","name":"TO_FVOCI","x":440,"y":200},
+        {"id":"i9rc_pl","name":"TO_FVTPL","x":440,"y":320},
+        {"id":"i9rc_r","name":"RECLASSIFIED","x":560,"y":200}
+      ],
+      "edges": [
+        {"id":"i9rc_e1","from":"i9rc_c","to":"i9rc_b","event":"MODEL_CHANGES"},
+        {"id":"i9rc_e2","from":"i9rc_b","to":"i9rc_ac","event":"NOW_HOLD_COLLECT"},
+        {"id":"i9rc_e3","from":"i9rc_b","to":"i9rc_oci","event":"NOW_HOLD_SELL"},
+        {"id":"i9rc_e4","from":"i9rc_b","to":"i9rc_pl","event":"NOW_TRADING"},
+        {"id":"i9rc_e5","from":"i9rc_ac","to":"i9rc_r","event":"APPLY_PROSPECTIVE"},
+        {"id":"i9rc_e6","from":"i9rc_oci","to":"i9rc_r","event":"APPLY_PROSPECTIVE"},
+        {"id":"i9rc_e7","from":"i9rc_pl","to":"i9rc_r","event":"APPLY_PROSPECTIVE"}
+      ],
+      "initialStateId":"i9rc_c","finalStateIds":["i9rc_r"]
+    },
+    "ifrs9_financialGuarantee": {
+      "label": "IFRS 9: Financial Guarantee", "category": "IFRS 9",
+      "description": "Financial guarantee contract lifecycle: initial recognition at fair value, subsequent measurement at higher of ECL provision and amortized premium, through to expiry or payout.",
+      "nodes": [
+        {"id":"i9fg_i","name":"ISSUED","x":80,"y":200},
+        {"id":"i9fg_r","name":"RECOGNIZED_AT_FV","x":240,"y":200},
+        {"id":"i9fg_m","name":"MEASURING","x":400,"y":120},
+        {"id":"i9fg_cl","name":"CLAIM_RECEIVED","x":400,"y":300},
+        {"id":"i9fg_p","name":"PAYOUT","x":540,"y":300},
+        {"id":"i9fg_x","name":"EXPIRED","x":540,"y":120}
+      ],
+      "edges": [
+        {"id":"i9fg_e1","from":"i9fg_i","to":"i9fg_r","event":"INITIAL_RECOG"},
+        {"id":"i9fg_e2","from":"i9fg_r","to":"i9fg_m","event":"MEASURE_HIGHER_OF"},
+        {"id":"i9fg_e3","from":"i9fg_m","to":"i9fg_m","event":"PERIOD_END"},
+        {"id":"i9fg_e4","from":"i9fg_m","to":"i9fg_cl","event":"CLAIM"},
+        {"id":"i9fg_e5","from":"i9fg_cl","to":"i9fg_p","event":"PAY_BENEFICIARY"},
+        {"id":"i9fg_e6","from":"i9fg_m","to":"i9fg_x","event":"EXPIRE"}
+      ],
+      "initialStateId":"i9fg_i","finalStateIds":["i9fg_x","i9fg_p"]
+    },
+    "ifrs9_writeoffRecovery": {
+      "label": "IFRS 9: Write-off and Recovery", "category": "IFRS 9",
+      "description": "After write-off, the entity may still pursue recovery. Amounts recovered are recognized in P&L. The asset remains derecognized even if partial recovery occurs.",
+      "nodes": [
+        {"id":"i9wr_s3","name":"STAGE_3","x":80,"y":200},
+        {"id":"i9wr_wo","name":"WRITTEN_OFF","x":240,"y":200},
+        {"id":"i9wr_pr","name":"PURSUING_RECOVERY","x":400,"y":120},
+        {"id":"i9wr_rc","name":"PARTIAL_RECOVERY","x":540,"y":120},
+        {"id":"i9wr_nr","name":"NO_RECOVERY","x":400,"y":300},
+        {"id":"i9wr_cl","name":"CLOSED","x":540,"y":260}
+      ],
+      "edges": [
+        {"id":"i9wr_e1","from":"i9wr_s3","to":"i9wr_wo","event":"WRITE_OFF"},
+        {"id":"i9wr_e2","from":"i9wr_wo","to":"i9wr_pr","event":"PURSUE"},
+        {"id":"i9wr_e3","from":"i9wr_wo","to":"i9wr_nr","event":"ABANDON"},
+        {"id":"i9wr_e4","from":"i9wr_pr","to":"i9wr_rc","event":"AMOUNT_RECOVERED"},
+        {"id":"i9wr_e5","from":"i9wr_rc","to":"i9wr_pr","event":"CONTINUE_PURSUIT"},
+        {"id":"i9wr_e6","from":"i9wr_rc","to":"i9wr_cl","event":"CASE_CLOSED"},
+        {"id":"i9wr_e7","from":"i9wr_pr","to":"i9wr_cl","event":"EXHAUST_OPTIONS"},
+        {"id":"i9wr_e8","from":"i9wr_nr","to":"i9wr_cl","event":"CLOSE"}
+      ],
+      "initialStateId":"i9wr_s3","finalStateIds":["i9wr_cl"]
+    },
+
+    "mcmc_hmc": {
+      "label": "Hamiltonian Monte Carlo", "category": "MCMC",
+      "description": "HMC augments the parameter space with momentum variables. Leapfrog integration simulates Hamiltonian dynamics to propose distant points with high acceptance probability.",
+      "nodes": [
+        {"id":"hmc_i","name":"INIT","x":80,"y":200},
+        {"id":"hmc_m","name":"SAMPLE_MOMENTUM","x":220,"y":120},
+        {"id":"hmc_l","name":"LEAPFROG","x":380,"y":120},
+        {"id":"hmc_h","name":"COMPUTE_HAMILTONIAN","x":520,"y":200},
+        {"id":"hmc_a","name":"ACCEPT","x":520,"y":80},
+        {"id":"hmc_r","name":"REJECT","x":520,"y":320},
+        {"id":"hmc_s","name":"STORED","x":340,"y":300}
+      ],
+      "edges": [
+        {"id":"hmc_e1","from":"hmc_i","to":"hmc_m","event":"START"},
+        {"id":"hmc_e2","from":"hmc_m","to":"hmc_l","event":"INTEGRATE"},
+        {"id":"hmc_e3","from":"hmc_l","to":"hmc_l","event":"LEAPFROG_STEP"},
+        {"id":"hmc_e4","from":"hmc_l","to":"hmc_h","event":"END_TRAJECTORY"},
+        {"id":"hmc_e5","from":"hmc_h","to":"hmc_a","event":"MH_ACCEPT"},
+        {"id":"hmc_e6","from":"hmc_h","to":"hmc_r","event":"MH_REJECT"},
+        {"id":"hmc_e7","from":"hmc_a","to":"hmc_s","event":"STORE_PROPOSAL"},
+        {"id":"hmc_e8","from":"hmc_r","to":"hmc_s","event":"STORE_CURRENT"},
+        {"id":"hmc_e9","from":"hmc_s","to":"hmc_m","event":"NEXT"}
+      ],
+      "initialStateId":"hmc_i","finalStateIds":["hmc_s"]
+    },
+    "mcmc_nuts": {
+      "label": "No-U-Turn Sampler (NUTS)", "category": "MCMC",
+      "description": "NUTS automatically tunes the trajectory length in HMC by building a binary tree and stopping when the trajectory starts to double back (U-turn criterion).",
+      "nodes": [
+        {"id":"nuts_i","name":"INIT","x":80,"y":200},
+        {"id":"nuts_m","name":"SAMPLE_MOMENTUM","x":220,"y":120},
+        {"id":"nuts_b","name":"BUILD_TREE","x":380,"y":120},
+        {"id":"nuts_u","name":"CHECK_UTURN","x":500,"y":200},
+        {"id":"nuts_e","name":"EXPAND_TREE","x":380,"y":300},
+        {"id":"nuts_s","name":"SELECT_SAMPLE","x":540,"y":80},
+        {"id":"nuts_d","name":"STORED","x":540,"y":320}
+      ],
+      "edges": [
+        {"id":"nuts_e1","from":"nuts_i","to":"nuts_m","event":"START"},
+        {"id":"nuts_e2","from":"nuts_m","to":"nuts_b","event":"INIT_TREE"},
+        {"id":"nuts_e3","from":"nuts_b","to":"nuts_u","event":"CHECK"},
+        {"id":"nuts_e4","from":"nuts_u","to":"nuts_e","event":"NO_UTURN"},
+        {"id":"nuts_e5","from":"nuts_e","to":"nuts_b","event":"DOUBLE_TREE"},
+        {"id":"nuts_e6","from":"nuts_u","to":"nuts_s","event":"UTURN_DETECTED"},
+        {"id":"nuts_e7","from":"nuts_s","to":"nuts_d","event":"STORE"},
+        {"id":"nuts_e8","from":"nuts_d","to":"nuts_m","event":"NEXT"}
+      ],
+      "initialStateId":"nuts_i","finalStateIds":["nuts_d"]
+    },
+    "mcmc_parallelTempering": {
+      "label": "Parallel Tempering", "category": "MCMC",
+      "description": "Run multiple chains at different temperatures. Hot chains explore freely, cold chains sample accurately. Periodically swap states between adjacent temperatures based on Metropolis criterion.",
+      "nodes": [
+        {"id":"pt_i","name":"INIT_CHAINS","x":80,"y":200},
+        {"id":"pt_s","name":"SAMPLING","x":240,"y":120},
+        {"id":"pt_sw","name":"SWAP_PROPOSAL","x":400,"y":120},
+        {"id":"pt_a","name":"SWAP_ACCEPTED","x":520,"y":80},
+        {"id":"pt_r","name":"SWAP_REJECTED","x":520,"y":200},
+        {"id":"pt_c","name":"COLLECT_COLD","x":400,"y":300},
+        {"id":"pt_d","name":"DONE","x":240,"y":320}
+      ],
+      "edges": [
+        {"id":"pt_e1","from":"pt_i","to":"pt_s","event":"START_ALL"},
+        {"id":"pt_e2","from":"pt_s","to":"pt_sw","event":"SWAP_INTERVAL"},
+        {"id":"pt_e3","from":"pt_sw","to":"pt_a","event":"MH_ACCEPT"},
+        {"id":"pt_e4","from":"pt_sw","to":"pt_r","event":"MH_REJECT"},
+        {"id":"pt_e5","from":"pt_a","to":"pt_c","event":"EXCHANGE_STATES"},
+        {"id":"pt_e6","from":"pt_r","to":"pt_c","event":"KEEP_STATES"},
+        {"id":"pt_e7","from":"pt_c","to":"pt_s","event":"CONTINUE"},
+        {"id":"pt_e8","from":"pt_c","to":"pt_d","event":"MAX_ITERATIONS"}
+      ],
+      "initialStateId":"pt_i","finalStateIds":["pt_d"]
+    },
+    "mcmc_sliceSampling": {
+      "label": "Slice Sampling", "category": "MCMC",
+      "description": "Slice sampling introduces an auxiliary variable to define a horizontal slice under the density. Then uniformly samples from the slice. Automatically adapts step size.",
+      "nodes": [
+        {"id":"sl_i","name":"CURRENT_POINT","x":100,"y":200},
+        {"id":"sl_h","name":"SAMPLE_HEIGHT","x":260,"y":120},
+        {"id":"sl_s","name":"DEFINE_SLICE","x":420,"y":120},
+        {"id":"sl_st","name":"STEPPING_OUT","x":420,"y":280},
+        {"id":"sl_sh","name":"SHRINKING","x":560,"y":200},
+        {"id":"sl_n","name":"NEW_POINT","x":260,"y":320}
+      ],
+      "edges": [
+        {"id":"sl_e1","from":"sl_i","to":"sl_h","event":"DRAW_UNIFORM"},
+        {"id":"sl_e2","from":"sl_h","to":"sl_s","event":"SET_LEVEL"},
+        {"id":"sl_e3","from":"sl_s","to":"sl_st","event":"FIND_INTERVAL"},
+        {"id":"sl_e4","from":"sl_st","to":"sl_st","event":"EXPAND"},
+        {"id":"sl_e5","from":"sl_st","to":"sl_sh","event":"INTERVAL_FOUND"},
+        {"id":"sl_e6","from":"sl_sh","to":"sl_sh","event":"SHRINK"},
+        {"id":"sl_e7","from":"sl_sh","to":"sl_n","event":"POINT_ACCEPTED"},
+        {"id":"sl_e8","from":"sl_n","to":"sl_i","event":"NEXT"}
+      ],
+      "initialStateId":"sl_i","finalStateIds":["sl_n"]
+    },
+    "mcmc_rjmcmc": {
+      "label": "Reversible Jump MCMC", "category": "MCMC",
+      "description": "RJMCMC allows moves between models of different dimensionality. Used for model selection where the number of parameters is unknown (e.g., number of mixture components).",
+      "nodes": [
+        {"id":"rj_c","name":"CURRENT_MODEL","x":80,"y":200},
+        {"id":"rj_p","name":"PROPOSE_MOVE","x":240,"y":200},
+        {"id":"rj_b","name":"BIRTH","x":400,"y":80},
+        {"id":"rj_d","name":"DEATH","x":400,"y":200},
+        {"id":"rj_w","name":"WITHIN_MODEL","x":400,"y":320},
+        {"id":"rj_a","name":"ACCEPTED","x":560,"y":120},
+        {"id":"rj_r","name":"REJECTED","x":560,"y":280}
+      ],
+      "edges": [
+        {"id":"rj_e1","from":"rj_c","to":"rj_p","event":"PROPOSE"},
+        {"id":"rj_e2","from":"rj_p","to":"rj_b","event":"ADD_COMPONENT"},
+        {"id":"rj_e3","from":"rj_p","to":"rj_d","event":"REMOVE_COMPONENT"},
+        {"id":"rj_e4","from":"rj_p","to":"rj_w","event":"UPDATE_PARAMS"},
+        {"id":"rj_e5","from":"rj_b","to":"rj_a","event":"MH_ACCEPT"},
+        {"id":"rj_e6","from":"rj_b","to":"rj_r","event":"MH_REJECT"},
+        {"id":"rj_e7","from":"rj_d","to":"rj_a","event":"MH_ACCEPT"},
+        {"id":"rj_e8","from":"rj_d","to":"rj_r","event":"MH_REJECT"},
+        {"id":"rj_e9","from":"rj_w","to":"rj_a","event":"MH_ACCEPT"},
+        {"id":"rj_e10","from":"rj_w","to":"rj_r","event":"MH_REJECT"},
+        {"id":"rj_e11","from":"rj_a","to":"rj_c","event":"UPDATE_STATE"},
+        {"id":"rj_e12","from":"rj_r","to":"rj_c","event":"KEEP_STATE"}
+      ],
+      "initialStateId":"rj_c","finalStateIds":["rj_c"]
+    },
+    "mcmc_adaptive": {
+      "label": "Adaptive MCMC", "category": "MCMC",
+      "description": "Automatically tunes the proposal distribution during warmup using the sample covariance of accepted points. Adaptation is disabled after warmup to preserve ergodicity.",
+      "nodes": [
+        {"id":"am_i","name":"INIT_PROPOSAL","x":80,"y":200},
+        {"id":"am_s","name":"SAMPLING","x":240,"y":120},
+        {"id":"am_c","name":"COLLECT_STATS","x":400,"y":120},
+        {"id":"am_u","name":"UPDATE_PROPOSAL","x":400,"y":280},
+        {"id":"am_f","name":"FREEZE_PROPOSAL","x":560,"y":200},
+        {"id":"am_p","name":"PRODUCTION","x":560,"y":340}
+      ],
+      "edges": [
+        {"id":"am_e1","from":"am_i","to":"am_s","event":"START"},
+        {"id":"am_e2","from":"am_s","to":"am_c","event":"BATCH_COMPLETE"},
+        {"id":"am_e3","from":"am_c","to":"am_u","event":"COMPUTE_COVARIANCE"},
+        {"id":"am_e4","from":"am_u","to":"am_s","event":"CONTINUE_WARMUP"},
+        {"id":"am_e5","from":"am_u","to":"am_f","event":"WARMUP_DONE"},
+        {"id":"am_e6","from":"am_f","to":"am_p","event":"PRODUCTION_SAMPLING"},
+        {"id":"am_e7","from":"am_p","to":"am_p","event":"SAMPLE"}
+      ],
+      "initialStateId":"am_i","finalStateIds":["am_p"]
+    },
+    "mcmc_multiChain": {
+      "label": "Multi-Chain Management", "category": "MCMC",
+      "description": "Running multiple independent chains, monitoring inter-chain variance (R-hat), and combining results. Chains that diverge are flagged and potentially restarted.",
+      "nodes": [
+        {"id":"mch_i","name":"INIT_CHAINS","x":80,"y":200},
+        {"id":"mch_r","name":"RUNNING","x":220,"y":120},
+        {"id":"mch_d","name":"DIAGNOSTICS","x":380,"y":120},
+        {"id":"mch_g","name":"CHAINS_AGREE","x":500,"y":80},
+        {"id":"mch_x","name":"CHAINS_DISAGREE","x":500,"y":220},
+        {"id":"mch_rs","name":"RESTART_BAD","x":380,"y":300},
+        {"id":"mch_m","name":"MERGE_SAMPLES","x":500,"y":360}
+      ],
+      "edges": [
+        {"id":"mch_e1","from":"mch_i","to":"mch_r","event":"LAUNCH"},
+        {"id":"mch_e2","from":"mch_r","to":"mch_d","event":"CHECK_INTERVAL"},
+        {"id":"mch_e3","from":"mch_d","to":"mch_g","event":"RHAT_GOOD"},
+        {"id":"mch_e4","from":"mch_d","to":"mch_x","event":"RHAT_BAD"},
+        {"id":"mch_e5","from":"mch_g","to":"mch_r","event":"CONTINUE"},
+        {"id":"mch_e6","from":"mch_g","to":"mch_m","event":"SUFFICIENT_ESS"},
+        {"id":"mch_e7","from":"mch_x","to":"mch_rs","event":"IDENTIFY_BAD"},
+        {"id":"mch_e8","from":"mch_rs","to":"mch_r","event":"RESTARTED"}
+      ],
+      "initialStateId":"mch_i","finalStateIds":["mch_m"]
+    },
+    "mcmc_thinning": {
+      "label": "MCMC Post-Processing", "category": "MCMC",
+      "description": "After sampling: discard warmup, thin to reduce autocorrelation, compute summaries, check effective sample size, and store results.",
+      "nodes": [
+        {"id":"mct_r","name":"RAW_SAMPLES","x":80,"y":200},
+        {"id":"mct_d","name":"DISCARD_WARMUP","x":220,"y":120},
+        {"id":"mct_t","name":"THINNING","x":380,"y":120},
+        {"id":"mct_e","name":"CHECK_ESS","x":500,"y":200},
+        {"id":"mct_s","name":"COMPUTE_SUMMARY","x":380,"y":300},
+        {"id":"mct_f","name":"RESULTS_STORED","x":220,"y":300}
+      ],
+      "edges": [
+        {"id":"mct_e1","from":"mct_r","to":"mct_d","event":"REMOVE_BURNIN"},
+        {"id":"mct_e2","from":"mct_d","to":"mct_t","event":"THIN"},
+        {"id":"mct_e3","from":"mct_t","to":"mct_e","event":"CHECK"},
+        {"id":"mct_e4","from":"mct_e","to":"mct_s","event":"ESS_OK"},
+        {"id":"mct_e5","from":"mct_e","to":"mct_r","event":"ESS_LOW"},
+        {"id":"mct_e6","from":"mct_s","to":"mct_f","event":"STORE"}
+      ],
+      "initialStateId":"mct_r","finalStateIds":["mct_f"]
+    },
+    "mcmc_ppc": {
+      "label": "Posterior Predictive Check", "category": "MCMC",
+      "description": "Generate simulated data from the posterior predictive distribution. Compare to observed data using test statistics. Systematic discrepancies indicate model misspecification.",
+      "nodes": [
+        {"id":"ppc_p","name":"POSTERIOR","x":80,"y":200},
+        {"id":"ppc_g","name":"GENERATE_DATA","x":240,"y":120},
+        {"id":"ppc_t","name":"COMPUTE_TEST_STAT","x":400,"y":120},
+        {"id":"ppc_c","name":"COMPARE","x":520,"y":200},
+        {"id":"ppc_ok","name":"MODEL_OK","x":520,"y":80},
+        {"id":"ppc_bad","name":"MISSPECIFIED","x":520,"y":320},
+        {"id":"ppc_r","name":"REVISE_MODEL","x":300,"y":320}
+      ],
+      "edges": [
+        {"id":"ppc_e1","from":"ppc_p","to":"ppc_g","event":"SAMPLE_PARAMS"},
+        {"id":"ppc_e2","from":"ppc_g","to":"ppc_t","event":"SIMULATE"},
+        {"id":"ppc_e3","from":"ppc_t","to":"ppc_c","event":"COMPARE_TO_OBS"},
+        {"id":"ppc_e4","from":"ppc_c","to":"ppc_ok","event":"CONSISTENT"},
+        {"id":"ppc_e5","from":"ppc_c","to":"ppc_bad","event":"DISCREPANCY"},
+        {"id":"ppc_e6","from":"ppc_bad","to":"ppc_r","event":"DIAGNOSE"},
+        {"id":"ppc_e7","from":"ppc_r","to":"ppc_p","event":"REFIT"}
+      ],
+      "initialStateId":"ppc_p","finalStateIds":["ppc_ok"]
+    },
+    "mcmc_smc": {
+      "label": "Sequential Monte Carlo", "category": "MCMC",
+      "description": "Particle filter: maintain a weighted set of particles, update weights as new data arrives, resample when effective sample size drops. Used for online/streaming inference.",
+      "nodes": [
+        {"id":"smc_i","name":"INIT_PARTICLES","x":80,"y":200},
+        {"id":"smc_p","name":"PREDICT","x":220,"y":120},
+        {"id":"smc_u","name":"UPDATE_WEIGHTS","x":380,"y":120},
+        {"id":"smc_e","name":"CHECK_ESS","x":500,"y":200},
+        {"id":"smc_r","name":"RESAMPLE","x":380,"y":300},
+        {"id":"smc_s","name":"ESTIMATE","x":220,"y":300}
+      ],
+      "edges": [
+        {"id":"smc_e1","from":"smc_i","to":"smc_p","event":"NEW_DATA"},
+        {"id":"smc_e2","from":"smc_p","to":"smc_u","event":"COMPUTE_LIKELIHOOD"},
+        {"id":"smc_e3","from":"smc_u","to":"smc_e","event":"NORMALIZE"},
+        {"id":"smc_e4","from":"smc_e","to":"smc_r","event":"ESS_LOW"},
+        {"id":"smc_e5","from":"smc_e","to":"smc_s","event":"ESS_OK"},
+        {"id":"smc_e6","from":"smc_r","to":"smc_s","event":"RESAMPLED"},
+        {"id":"smc_e7","from":"smc_s","to":"smc_p","event":"NEXT_OBSERVATION"}
+      ],
+      "initialStateId":"smc_i","finalStateIds":["smc_s"]
+    },
+    "mcmc_diagnosticSuite": {
+      "label": "MCMC Diagnostic Suite", "category": "MCMC",
+      "description": "Comprehensive diagnostic workflow: trace plots, autocorrelation, R-hat, ESS, divergence checks, energy diagnostics. Each check can pass or flag issues.",
+      "nodes": [
+        {"id":"ds_s","name":"SAMPLES","x":80,"y":200},
+        {"id":"ds_t","name":"TRACE_PLOTS","x":220,"y":100},
+        {"id":"ds_a","name":"AUTOCORRELATION","x":360,"y":100},
+        {"id":"ds_r","name":"RHAT_CHECK","x":500,"y":100},
+        {"id":"ds_e","name":"ESS_CHECK","x":500,"y":240},
+        {"id":"ds_d","name":"DIVERGENCE_CHECK","x":360,"y":300},
+        {"id":"ds_p","name":"ALL_PASSED","x":220,"y":350},
+        {"id":"ds_f","name":"ISSUES_FOUND","x":500,"y":380}
+      ],
+      "edges": [
+        {"id":"ds_e1","from":"ds_s","to":"ds_t","event":"INSPECT"},
+        {"id":"ds_e2","from":"ds_t","to":"ds_a","event":"PASS"},
+        {"id":"ds_e3","from":"ds_t","to":"ds_f","event":"NON_STATIONARY"},
+        {"id":"ds_e4","from":"ds_a","to":"ds_r","event":"LOW_AUTOCORR"},
+        {"id":"ds_e5","from":"ds_a","to":"ds_f","event":"HIGH_AUTOCORR"},
+        {"id":"ds_e6","from":"ds_r","to":"ds_e","event":"RHAT_OK"},
+        {"id":"ds_e7","from":"ds_r","to":"ds_f","event":"RHAT_BAD"},
+        {"id":"ds_e8","from":"ds_e","to":"ds_d","event":"ESS_OK"},
+        {"id":"ds_e9","from":"ds_e","to":"ds_f","event":"ESS_LOW"},
+        {"id":"ds_e10","from":"ds_d","to":"ds_p","event":"NO_DIVERGENCES"},
+        {"id":"ds_e11","from":"ds_d","to":"ds_f","event":"DIVERGENCES_FOUND"}
+      ],
+      "initialStateId":"ds_s","finalStateIds":["ds_p","ds_f"]
+    },
+
+    "bayes_hierarchical": {
+      "label": "Bayesian Hierarchical Model", "category": "Bayesian",
+      "description": "Multi-level model: hyperpriors govern group-level parameters, which govern unit-level parameters. Partial pooling emerges naturally. Fit via MCMC or variational inference.",
+      "nodes": [
+        {"id":"bh_hp","name":"SET_HYPERPRIORS","x":80,"y":200},
+        {"id":"bh_gp","name":"GROUP_PARAMS","x":240,"y":120},
+        {"id":"bh_up","name":"UNIT_PARAMS","x":400,"y":120},
+        {"id":"bh_l","name":"LIKELIHOOD","x":520,"y":200},
+        {"id":"bh_f","name":"FIT","x":400,"y":300},
+        {"id":"bh_pp","name":"PARTIAL_POOLING","x":240,"y":300}
+      ],
+      "edges": [
+        {"id":"bh_e1","from":"bh_hp","to":"bh_gp","event":"SAMPLE_HYPER"},
+        {"id":"bh_e2","from":"bh_gp","to":"bh_up","event":"SAMPLE_GROUP"},
+        {"id":"bh_e3","from":"bh_up","to":"bh_l","event":"COMPUTE_LIKELIHOOD"},
+        {"id":"bh_e4","from":"bh_l","to":"bh_f","event":"UPDATE_POSTERIOR"},
+        {"id":"bh_e5","from":"bh_f","to":"bh_pp","event":"ESTIMATE_SHRINKAGE"},
+        {"id":"bh_e6","from":"bh_pp","to":"bh_gp","event":"ITERATE"}
+      ],
+      "initialStateId":"bh_hp","finalStateIds":["bh_pp"]
+    },
+    "bayes_optimization": {
+      "label": "Bayesian Optimization", "category": "Bayesian",
+      "description": "Black-box optimization: fit a Gaussian Process surrogate to observations, maximize an acquisition function (EI, UCB) to select the next evaluation point, observe, update, repeat.",
+      "nodes": [
+        {"id":"bo_i","name":"INITIAL_POINTS","x":80,"y":200},
+        {"id":"bo_g","name":"FIT_GP","x":220,"y":120},
+        {"id":"bo_a","name":"MAXIMIZE_ACQ","x":380,"y":120},
+        {"id":"bo_e","name":"EVALUATE","x":520,"y":200},
+        {"id":"bo_u","name":"UPDATE_DATA","x":380,"y":300},
+        {"id":"bo_c","name":"CHECK_BUDGET","x":220,"y":300},
+        {"id":"bo_d","name":"BEST_FOUND","x":80,"y":300}
+      ],
+      "edges": [
+        {"id":"bo_e1","from":"bo_i","to":"bo_g","event":"ENOUGH_POINTS"},
+        {"id":"bo_e2","from":"bo_g","to":"bo_a","event":"POSTERIOR_READY"},
+        {"id":"bo_e3","from":"bo_a","to":"bo_e","event":"NEXT_POINT"},
+        {"id":"bo_e4","from":"bo_e","to":"bo_u","event":"OBSERVE_VALUE"},
+        {"id":"bo_e5","from":"bo_u","to":"bo_c","event":"UPDATE_GP"},
+        {"id":"bo_e6","from":"bo_c","to":"bo_g","event":"BUDGET_REMAINING"},
+        {"id":"bo_e7","from":"bo_c","to":"bo_d","event":"BUDGET_EXHAUSTED"}
+      ],
+      "initialStateId":"bo_i","finalStateIds":["bo_d"]
+    },
+    "bayes_variational": {
+      "label": "Variational Inference (ELBO)", "category": "Bayesian",
+      "description": "Approximate the posterior with a simpler distribution by maximizing the Evidence Lower Bound (ELBO). Faster than MCMC but introduces approximation error.",
+      "nodes": [
+        {"id":"vi_m","name":"SPECIFY_MODEL","x":80,"y":200},
+        {"id":"vi_q","name":"CHOOSE_FAMILY","x":240,"y":120},
+        {"id":"vi_o","name":"OPTIMIZE_ELBO","x":400,"y":120},
+        {"id":"vi_c","name":"CHECK_CONVERGENCE","x":520,"y":200},
+        {"id":"vi_d","name":"DIAGNOSTICS","x":400,"y":300},
+        {"id":"vi_a","name":"APPROX_POSTERIOR","x":240,"y":300}
+      ],
+      "edges": [
+        {"id":"vi_e1","from":"vi_m","to":"vi_q","event":"SELECT_Q"},
+        {"id":"vi_e2","from":"vi_q","to":"vi_o","event":"INIT_PARAMS"},
+        {"id":"vi_e3","from":"vi_o","to":"vi_o","event":"GRADIENT_STEP"},
+        {"id":"vi_e4","from":"vi_o","to":"vi_c","event":"CHECK"},
+        {"id":"vi_e5","from":"vi_c","to":"vi_o","event":"NOT_CONVERGED"},
+        {"id":"vi_e6","from":"vi_c","to":"vi_d","event":"CONVERGED"},
+        {"id":"vi_e7","from":"vi_d","to":"vi_a","event":"QUALITY_OK"},
+        {"id":"vi_e8","from":"vi_d","to":"vi_q","event":"QUALITY_BAD"}
+      ],
+      "initialStateId":"vi_m","finalStateIds":["vi_a"]
+    },
+    "bayes_priorElicitation": {
+      "label": "Prior Elicitation", "category": "Bayesian",
+      "description": "Structured process for translating expert knowledge into prior distributions. Elicit quantiles, check consistency, fit parametric family, validate with prior predictive simulation.",
+      "nodes": [
+        {"id":"pe_e","name":"IDENTIFY_EXPERT","x":80,"y":200},
+        {"id":"pe_q","name":"ELICIT_QUANTILES","x":240,"y":120},
+        {"id":"pe_c","name":"CHECK_CONSISTENCY","x":400,"y":120},
+        {"id":"pe_f","name":"FIT_DISTRIBUTION","x":520,"y":200},
+        {"id":"pe_pp","name":"PRIOR_PREDICTIVE","x":400,"y":300},
+        {"id":"pe_ok","name":"PRIOR_ACCEPTED","x":240,"y":300},
+        {"id":"pe_re","name":"REVISE","x":400,"y":400}
+      ],
+      "edges": [
+        {"id":"pe_e1","from":"pe_e","to":"pe_q","event":"INTERVIEW"},
+        {"id":"pe_e2","from":"pe_q","to":"pe_c","event":"COLLECTED"},
+        {"id":"pe_e3","from":"pe_c","to":"pe_f","event":"CONSISTENT"},
+        {"id":"pe_e4","from":"pe_c","to":"pe_q","event":"INCONSISTENT"},
+        {"id":"pe_e5","from":"pe_f","to":"pe_pp","event":"SIMULATE"},
+        {"id":"pe_e6","from":"pe_pp","to":"pe_ok","event":"PLAUSIBLE"},
+        {"id":"pe_e7","from":"pe_pp","to":"pe_re","event":"IMPLAUSIBLE"},
+        {"id":"pe_e8","from":"pe_re","to":"pe_q","event":"RE_ELICIT"}
+      ],
+      "initialStateId":"pe_e","finalStateIds":["pe_ok"]
+    },
+    "bayes_clinicalTrial": {
+      "label": "Bayesian Clinical Trial", "category": "Bayesian",
+      "description": "Adaptive Bayesian trial: update treatment effect posterior after each cohort. Allow early stopping for efficacy, futility, or safety. Adjust randomization ratios based on interim data.",
+      "nodes": [
+        {"id":"ct_d","name":"DESIGN","x":80,"y":200},
+        {"id":"ct_r","name":"RECRUITING","x":220,"y":120},
+        {"id":"ct_a","name":"INTERIM_ANALYSIS","x":380,"y":120},
+        {"id":"ct_e","name":"EFFICACY_STOP","x":540,"y":60},
+        {"id":"ct_f","name":"FUTILITY_STOP","x":540,"y":180},
+        {"id":"ct_s","name":"SAFETY_STOP","x":540,"y":300},
+        {"id":"ct_c","name":"CONTINUE","x":380,"y":300},
+        {"id":"ct_fn","name":"FINAL_ANALYSIS","x":220,"y":300}
+      ],
+      "edges": [
+        {"id":"ct_e1","from":"ct_d","to":"ct_r","event":"OPEN_ENROLLMENT"},
+        {"id":"ct_e2","from":"ct_r","to":"ct_a","event":"COHORT_COMPLETE"},
+        {"id":"ct_e3","from":"ct_a","to":"ct_e","event":"HIGH_POSTERIOR_PROB"},
+        {"id":"ct_e4","from":"ct_a","to":"ct_f","event":"LOW_POSTERIOR_PROB"},
+        {"id":"ct_e5","from":"ct_a","to":"ct_s","event":"SAFETY_SIGNAL"},
+        {"id":"ct_e6","from":"ct_a","to":"ct_c","event":"INCONCLUSIVE"},
+        {"id":"ct_e7","from":"ct_c","to":"ct_r","event":"ADAPT_RANDOMIZATION"},
+        {"id":"ct_e8","from":"ct_r","to":"ct_fn","event":"MAX_ENROLLMENT"}
+      ],
+      "initialStateId":"ct_d","finalStateIds":["ct_e","ct_f","ct_s","ct_fn"]
+    },
+    "bayes_changepoint": {
+      "label": "Bayesian Changepoint Detection", "category": "Bayesian",
+      "description": "Online changepoint detection: maintain run-length posterior. At each observation, either the current regime continues or a changepoint occurred. Compute posterior over changepoint locations.",
+      "nodes": [
+        {"id":"cp_i","name":"INIT","x":80,"y":200},
+        {"id":"cp_o","name":"OBSERVE","x":220,"y":120},
+        {"id":"cp_p","name":"PREDICT","x":380,"y":120},
+        {"id":"cp_u","name":"UPDATE_RUN_LEN","x":520,"y":200},
+        {"id":"cp_g","name":"GROWTH","x":520,"y":80},
+        {"id":"cp_c","name":"CHANGEPOINT","x":520,"y":320},
+        {"id":"cp_r","name":"REPORT","x":340,"y":300}
+      ],
+      "edges": [
+        {"id":"cp_e1","from":"cp_i","to":"cp_o","event":"FIRST_OBS"},
+        {"id":"cp_e2","from":"cp_o","to":"cp_p","event":"PREDICTIVE"},
+        {"id":"cp_e3","from":"cp_p","to":"cp_u","event":"COMPUTE_POSTERIOR"},
+        {"id":"cp_e4","from":"cp_u","to":"cp_g","event":"REGIME_CONTINUES"},
+        {"id":"cp_e5","from":"cp_u","to":"cp_c","event":"CHANGEPOINT_LIKELY"},
+        {"id":"cp_e6","from":"cp_g","to":"cp_r","event":"UPDATE_PARAMS"},
+        {"id":"cp_e7","from":"cp_c","to":"cp_r","event":"RESET_PARAMS"},
+        {"id":"cp_e8","from":"cp_r","to":"cp_o","event":"NEXT_OBS"}
+      ],
+      "initialStateId":"cp_i","finalStateIds":["cp_r"]
+    },
+    "bayes_networkLearning": {
+      "label": "Bayesian Network Learning", "category": "Bayesian",
+      "description": "Learning both structure and parameters of a Bayesian network from data. Structure search (score-based or constraint-based), then parameter estimation given the learned DAG.",
+      "nodes": [
+        {"id":"bn_d","name":"DATA","x":80,"y":200},
+        {"id":"bn_s","name":"STRUCTURE_SEARCH","x":240,"y":120},
+        {"id":"bn_sc","name":"SCORE_EVALUATE","x":400,"y":120},
+        {"id":"bn_st","name":"STRUCTURE_SELECTED","x":520,"y":200},
+        {"id":"bn_p","name":"PARAM_ESTIMATION","x":400,"y":300},
+        {"id":"bn_v","name":"VALIDATED","x":240,"y":300}
+      ],
+      "edges": [
+        {"id":"bn_e1","from":"bn_d","to":"bn_s","event":"INIT_SEARCH"},
+        {"id":"bn_e2","from":"bn_s","to":"bn_sc","event":"CANDIDATE_DAG"},
+        {"id":"bn_e3","from":"bn_sc","to":"bn_s","event":"SEARCH_CONTINUES"},
+        {"id":"bn_e4","from":"bn_sc","to":"bn_st","event":"BEST_FOUND"},
+        {"id":"bn_e5","from":"bn_st","to":"bn_p","event":"ESTIMATE_CPTS"},
+        {"id":"bn_e6","from":"bn_p","to":"bn_v","event":"CROSS_VALIDATE"},
+        {"id":"bn_e7","from":"bn_v","to":"bn_s","event":"POOR_FIT"}
+      ],
+      "initialStateId":"bn_d","finalStateIds":["bn_v"]
+    },
+    "bayes_empirical": {
+      "label": "Empirical Bayes", "category": "Bayesian",
+      "description": "Two-stage estimation: first estimate hyperparameters from the marginal likelihood (the empirical step), then use those as fixed priors for the full Bayesian analysis.",
+      "nodes": [
+        {"id":"eb_d","name":"DATA","x":80,"y":200},
+        {"id":"eb_m","name":"MARGINAL_LIK","x":220,"y":120},
+        {"id":"eb_h","name":"ESTIMATE_HYPER","x":380,"y":120},
+        {"id":"eb_p","name":"PLUG_IN_PRIOR","x":520,"y":200},
+        {"id":"eb_b","name":"FULL_BAYES","x":380,"y":300},
+        {"id":"eb_r","name":"RESULT","x":220,"y":300}
+      ],
+      "edges": [
+        {"id":"eb_e1","from":"eb_d","to":"eb_m","event":"COMPUTE_MARGINAL"},
+        {"id":"eb_e2","from":"eb_m","to":"eb_h","event":"MAXIMIZE"},
+        {"id":"eb_e3","from":"eb_h","to":"eb_p","event":"FIX_HYPERPARAMS"},
+        {"id":"eb_e4","from":"eb_p","to":"eb_b","event":"POSTERIOR_UPDATE"},
+        {"id":"eb_e5","from":"eb_b","to":"eb_r","event":"SUMMARIZE"}
+      ],
+      "initialStateId":"eb_d","finalStateIds":["eb_r"]
+    },
+    "bayes_metaAnalysis": {
+      "label": "Bayesian Meta-Analysis", "category": "Bayesian",
+      "description": "Combining effect sizes from multiple studies. Random-effects model accounts for between-study heterogeneity. The posterior on the overall effect incorporates uncertainty from all sources.",
+      "nodes": [
+        {"id":"ma_s","name":"COLLECT_STUDIES","x":80,"y":200},
+        {"id":"ma_e","name":"EXTRACT_EFFECTS","x":240,"y":120},
+        {"id":"ma_h","name":"MODEL_HETEROGENEITY","x":420,"y":120},
+        {"id":"ma_f","name":"FIT_MODEL","x":520,"y":200},
+        {"id":"ma_p","name":"POSTERIOR_EFFECT","x":420,"y":300},
+        {"id":"ma_d","name":"FOREST_PLOT","x":240,"y":300}
+      ],
+      "edges": [
+        {"id":"ma_e1","from":"ma_s","to":"ma_e","event":"SCREEN_STUDIES"},
+        {"id":"ma_e2","from":"ma_e","to":"ma_h","event":"EFFECTS_EXTRACTED"},
+        {"id":"ma_e3","from":"ma_h","to":"ma_f","event":"SPECIFY_TAU"},
+        {"id":"ma_e4","from":"ma_f","to":"ma_p","event":"SAMPLE_POSTERIOR"},
+        {"id":"ma_e5","from":"ma_p","to":"ma_d","event":"VISUALIZE"},
+        {"id":"ma_e6","from":"ma_d","to":"ma_h","event":"SENSITIVITY_CHECK"}
+      ],
+      "initialStateId":"ma_s","finalStateIds":["ma_d"]
+    },
+    "bayes_decisionTheory": {
+      "label": "Bayesian Decision Theory", "category": "Bayesian",
+      "description": "Optimal decision-making under uncertainty. Define a loss function, compute posterior expected loss for each action, choose the action minimizing expected loss (Bayes risk).",
+      "nodes": [
+        {"id":"dt_p","name":"POSTERIOR","x":80,"y":200},
+        {"id":"dt_a","name":"ENUMERATE_ACTIONS","x":240,"y":120},
+        {"id":"dt_l","name":"DEFINE_LOSS","x":400,"y":120},
+        {"id":"dt_c","name":"COMPUTE_RISK","x":520,"y":200},
+        {"id":"dt_m","name":"MINIMIZE","x":400,"y":300},
+        {"id":"dt_d","name":"OPTIMAL_ACTION","x":240,"y":300}
+      ],
+      "edges": [
+        {"id":"dt_e1","from":"dt_p","to":"dt_a","event":"LIST_ACTIONS"},
+        {"id":"dt_e2","from":"dt_a","to":"dt_l","event":"SPECIFY_LOSS"},
+        {"id":"dt_e3","from":"dt_l","to":"dt_c","event":"INTEGRATE"},
+        {"id":"dt_e4","from":"dt_c","to":"dt_m","event":"COMPARE"},
+        {"id":"dt_e5","from":"dt_m","to":"dt_d","event":"SELECT_MIN_RISK"},
+        {"id":"dt_e6","from":"dt_d","to":"dt_p","event":"NEW_DATA"}
+      ],
+      "initialStateId":"dt_p","finalStateIds":["dt_d"]
+    },
+    "bayes_timeSeries": {
+      "label": "Bayesian State Space Model", "category": "Bayesian",
+      "description": "State space model with Bayesian inference: hidden state evolves via transition equation, observations generated via observation equation. Kalman filter (linear) or particle filter (nonlinear).",
+      "nodes": [
+        {"id":"ss_i","name":"INIT_STATE","x":80,"y":200},
+        {"id":"ss_p","name":"PREDICT_STATE","x":220,"y":120},
+        {"id":"ss_o","name":"OBSERVE","x":380,"y":120},
+        {"id":"ss_u","name":"UPDATE_STATE","x":520,"y":200},
+        {"id":"ss_s","name":"SMOOTH","x":380,"y":300},
+        {"id":"ss_f","name":"FORECAST","x":220,"y":300}
+      ],
+      "edges": [
+        {"id":"ss_e1","from":"ss_i","to":"ss_p","event":"TRANSITION"},
+        {"id":"ss_e2","from":"ss_p","to":"ss_o","event":"NEW_OBS"},
+        {"id":"ss_e3","from":"ss_o","to":"ss_u","event":"KALMAN_UPDATE"},
+        {"id":"ss_e4","from":"ss_u","to":"ss_p","event":"NEXT_TIME_STEP"},
+        {"id":"ss_e5","from":"ss_u","to":"ss_s","event":"ALL_DATA_SEEN"},
+        {"id":"ss_e6","from":"ss_s","to":"ss_f","event":"EXTRAPOLATE"}
+      ],
+      "initialStateId":"ss_i","finalStateIds":["ss_f"]
+    },
+    "bayes_nonparametrics": {
+      "label": "Bayesian Nonparametrics (DPM)", "category": "Bayesian",
+      "description": "Dirichlet Process Mixture: the number of clusters is inferred from data. New observations can join existing clusters or create new ones. The posterior over partitions is updated via Chinese Restaurant Process or stick-breaking.",
+      "nodes": [
+        {"id":"dp_i","name":"INIT","x":80,"y":200},
+        {"id":"dp_o","name":"NEW_OBS","x":220,"y":120},
+        {"id":"dp_a","name":"ASSIGN_CLUSTER","x":380,"y":120},
+        {"id":"dp_e","name":"EXISTING_CLUSTER","x":520,"y":80},
+        {"id":"dp_n","name":"NEW_CLUSTER","x":520,"y":220},
+        {"id":"dp_u","name":"UPDATE_PARAMS","x":380,"y":300},
+        {"id":"dp_p","name":"POSTERIOR","x":220,"y":300}
+      ],
+      "edges": [
+        {"id":"dp_e1","from":"dp_i","to":"dp_o","event":"FIRST_OBS"},
+        {"id":"dp_e2","from":"dp_o","to":"dp_a","event":"CRP_PROBABILITIES"},
+        {"id":"dp_e3","from":"dp_a","to":"dp_e","event":"JOIN_EXISTING"},
+        {"id":"dp_e4","from":"dp_a","to":"dp_n","event":"CREATE_NEW"},
+        {"id":"dp_e5","from":"dp_e","to":"dp_u","event":"UPDATE_CLUSTER"},
+        {"id":"dp_e6","from":"dp_n","to":"dp_u","event":"INIT_CLUSTER"},
+        {"id":"dp_e7","from":"dp_u","to":"dp_p","event":"RECORD"},
+        {"id":"dp_e8","from":"dp_p","to":"dp_o","event":"NEXT_OBS"}
+      ],
+      "initialStateId":"dp_i","finalStateIds":["dp_p"]
+    }
+  }
+}
