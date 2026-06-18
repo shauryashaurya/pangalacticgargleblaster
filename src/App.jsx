@@ -672,6 +672,3389 @@ const BUILTIN_PRESETS = {
     initialStateId: "ci_c",
     finalStateIds: [ "ci_p" ],
   },
+  "agent_codeGen": {
+    "category": "Agentic AI",
+    "description": "Code agent: spec, generate, test, fix, lint, review. FSM prevents merging untested code.",
+    "edges": [
+      {
+        "event": "GENERATE",
+        "from": "cg_s",
+        "id": "cg_e1",
+        "to": "cg_g"
+      },
+      {
+        "event": "CODE_READY",
+        "from": "cg_g",
+        "id": "cg_e2",
+        "to": "cg_t"
+      },
+      {
+        "event": "TESTS_PASS",
+        "from": "cg_t",
+        "id": "cg_e3",
+        "to": "cg_l"
+      },
+      {
+        "event": "TESTS_FAIL",
+        "from": "cg_t",
+        "id": "cg_e4",
+        "to": "cg_f"
+      },
+      {
+        "event": "RETRY",
+        "from": "cg_f",
+        "id": "cg_e5",
+        "to": "cg_t"
+      },
+      {
+        "event": "LINT_CLEAN",
+        "from": "cg_l",
+        "id": "cg_e6",
+        "to": "cg_r"
+      },
+      {
+        "event": "LINT_ERRORS",
+        "from": "cg_l",
+        "id": "cg_e7",
+        "to": "cg_f"
+      },
+      {
+        "event": "APPROVED",
+        "from": "cg_r",
+        "id": "cg_e8",
+        "to": "cg_m"
+      },
+      {
+        "event": "CHANGES_REQUESTED",
+        "from": "cg_r",
+        "id": "cg_e9",
+        "to": "cg_f"
+      }
+    ],
+    "finalStateIds": [
+      "cg_m"
+    ],
+    "initialStateId": "cg_s",
+    "label": "Agentic Code Generation",
+    "nodes": [
+      {
+        "id": "cg_s",
+        "name": "SPEC",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "cg_g",
+        "name": "GENERATING",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "cg_t",
+        "name": "TESTING",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "cg_f",
+        "name": "FIXING",
+        "x": 380,
+        "y": 280
+      },
+      {
+        "id": "cg_l",
+        "name": "LINTING",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "cg_r",
+        "name": "REVIEW",
+        "x": 500,
+        "y": 340
+      },
+      {
+        "id": "cg_m",
+        "name": "MERGED",
+        "x": 340,
+        "y": 380
+      }
+    ]
+  },
+  "agent_contextWindow": {
+    "category": "Agentic AI",
+    "description": "Token budget: track usage, truncate/summarize near limit, prioritize recent context, handle overflow.",
+    "edges": [
+      {
+        "event": "ADD",
+        "from": "cw_o",
+        "id": "cw_e1",
+        "to": "cw_f"
+      },
+      {
+        "event": "ADD",
+        "from": "cw_f",
+        "id": "cw_e2",
+        "to": "cw_f"
+      },
+      {
+        "event": "80PCT",
+        "from": "cw_f",
+        "id": "cw_e3",
+        "to": "cw_n"
+      },
+      {
+        "event": "DROP_OLD",
+        "from": "cw_n",
+        "id": "cw_e4",
+        "to": "cw_t"
+      },
+      {
+        "event": "SUMMARIZE",
+        "from": "cw_n",
+        "id": "cw_e5",
+        "to": "cw_s"
+      },
+      {
+        "event": "FREED",
+        "from": "cw_t",
+        "id": "cw_e6",
+        "to": "cw_c"
+      },
+      {
+        "event": "COMPRESSED",
+        "from": "cw_s",
+        "id": "cw_e7",
+        "to": "cw_c"
+      },
+      {
+        "event": "CONTINUE",
+        "from": "cw_c",
+        "id": "cw_e8",
+        "to": "cw_f"
+      }
+    ],
+    "finalStateIds": [
+      "cw_f"
+    ],
+    "initialStateId": "cw_o",
+    "label": "Agent Context Window Mgmt",
+    "nodes": [
+      {
+        "id": "cw_o",
+        "name": "OPEN",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "cw_f",
+        "name": "FILLING",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "cw_n",
+        "name": "NEAR_LIMIT",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "cw_t",
+        "name": "TRUNCATING",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "cw_s",
+        "name": "SUMMARIZING",
+        "x": 380,
+        "y": 300
+      },
+      {
+        "id": "cw_c",
+        "name": "COMPACTED",
+        "x": 220,
+        "y": 300
+      }
+    ]
+  },
+  "agent_errorRecovery": {
+    "category": "Agentic AI",
+    "description": "Classify error, apply strategy (retry/fallback/escalate), track attempts, circuit-break on repeated failures.",
+    "edges": [
+      {
+        "event": "CLASSIFY",
+        "from": "er_e",
+        "id": "er_e1",
+        "to": "er_c"
+      },
+      {
+        "event": "TRANSIENT",
+        "from": "er_c",
+        "id": "er_e2",
+        "to": "er_rt"
+      },
+      {
+        "event": "KNOWN",
+        "from": "er_c",
+        "id": "er_e3",
+        "to": "er_fb"
+      },
+      {
+        "event": "UNKNOWN",
+        "from": "er_c",
+        "id": "er_e4",
+        "to": "er_es"
+      },
+      {
+        "event": "SUCCESS",
+        "from": "er_rt",
+        "id": "er_e5",
+        "to": "er_ok"
+      },
+      {
+        "event": "MAX_RETRIES",
+        "from": "er_rt",
+        "id": "er_e6",
+        "to": "er_fb"
+      },
+      {
+        "event": "FALLBACK_WORKS",
+        "from": "er_fb",
+        "id": "er_e7",
+        "to": "er_ok"
+      },
+      {
+        "event": "FALLBACK_FAILS",
+        "from": "er_fb",
+        "id": "er_e8",
+        "to": "er_es"
+      },
+      {
+        "event": "REPEATED",
+        "from": "er_es",
+        "id": "er_e9",
+        "to": "er_cb"
+      }
+    ],
+    "finalStateIds": [
+      "er_ok",
+      "er_cb"
+    ],
+    "initialStateId": "er_e",
+    "label": "Agent Error Recovery",
+    "nodes": [
+      {
+        "id": "er_e",
+        "name": "ERROR_CAUGHT",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "er_c",
+        "name": "CLASSIFYING",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "er_rt",
+        "name": "RETRYING",
+        "x": 380,
+        "y": 80
+      },
+      {
+        "id": "er_fb",
+        "name": "FALLBACK",
+        "x": 380,
+        "y": 200
+      },
+      {
+        "id": "er_es",
+        "name": "ESCALATING",
+        "x": 380,
+        "y": 320
+      },
+      {
+        "id": "er_ok",
+        "name": "RECOVERED",
+        "x": 520,
+        "y": 120
+      },
+      {
+        "id": "er_cb",
+        "name": "CIRCUIT_OPEN",
+        "x": 520,
+        "y": 300
+      }
+    ]
+  },
+  "agent_eval": {
+    "category": "Agentic AI",
+    "description": "Continuous evaluation: run test suite, score, compare baseline, promote or rollback. Prevents deploying regressed agents.",
+    "edges": [
+      {
+        "event": "RUN_SUITE",
+        "from": "ev_c",
+        "id": "ev_e1",
+        "to": "ev_t"
+      },
+      {
+        "event": "RESULTS",
+        "from": "ev_t",
+        "id": "ev_e2",
+        "to": "ev_s"
+      },
+      {
+        "event": "SCORES",
+        "from": "ev_s",
+        "id": "ev_e3",
+        "to": "ev_cm"
+      },
+      {
+        "event": "BEATS_BASELINE",
+        "from": "ev_cm",
+        "id": "ev_e4",
+        "to": "ev_pr"
+      },
+      {
+        "event": "REGRESSION",
+        "from": "ev_cm",
+        "id": "ev_e5",
+        "to": "ev_rb"
+      },
+      {
+        "event": "ITERATE",
+        "from": "ev_rb",
+        "id": "ev_e6",
+        "to": "ev_c"
+      }
+    ],
+    "finalStateIds": [
+      "ev_pr"
+    ],
+    "initialStateId": "ev_c",
+    "label": "Agent Evaluation Loop",
+    "nodes": [
+      {
+        "id": "ev_c",
+        "name": "CANDIDATE",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "ev_t",
+        "name": "TESTING",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "ev_s",
+        "name": "SCORING",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "ev_cm",
+        "name": "COMPARING",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "ev_pr",
+        "name": "PROMOTED",
+        "x": 400,
+        "y": 320
+      },
+      {
+        "id": "ev_rb",
+        "name": "ROLLED_BACK",
+        "x": 240,
+        "y": 320
+      }
+    ]
+  },
+  "agent_guardrails": {
+    "category": "Agentic AI",
+    "description": "Safety layer: content filter, policy check, PII scan, toxicity scoring. Violations trigger fallback.",
+    "edges": [
+      {
+        "event": "SCAN",
+        "from": "gr_r",
+        "id": "gr_e1",
+        "to": "gr_cf"
+      },
+      {
+        "event": "CONTENT_OK",
+        "from": "gr_cf",
+        "id": "gr_e2",
+        "to": "gr_pc"
+      },
+      {
+        "event": "TOXIC",
+        "from": "gr_cf",
+        "id": "gr_e3",
+        "to": "gr_bl"
+      },
+      {
+        "event": "POLICY_OK",
+        "from": "gr_pc",
+        "id": "gr_e4",
+        "to": "gr_pi"
+      },
+      {
+        "event": "VIOLATION",
+        "from": "gr_pc",
+        "id": "gr_e5",
+        "to": "gr_bl"
+      },
+      {
+        "event": "NO_PII",
+        "from": "gr_pi",
+        "id": "gr_e6",
+        "to": "gr_ok"
+      },
+      {
+        "event": "PII_FOUND",
+        "from": "gr_pi",
+        "id": "gr_e7",
+        "to": "gr_bl"
+      },
+      {
+        "event": "GENERATE_FALLBACK",
+        "from": "gr_bl",
+        "id": "gr_e8",
+        "to": "gr_fb"
+      }
+    ],
+    "finalStateIds": [
+      "gr_ok",
+      "gr_fb"
+    ],
+    "initialStateId": "gr_r",
+    "label": "Agent Guardrails",
+    "nodes": [
+      {
+        "id": "gr_r",
+        "name": "RAW_OUTPUT",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "gr_cf",
+        "name": "CONTENT_FILTER",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "gr_pc",
+        "name": "POLICY_CHECK",
+        "x": 360,
+        "y": 120
+      },
+      {
+        "id": "gr_pi",
+        "name": "PII_SCAN",
+        "x": 480,
+        "y": 200
+      },
+      {
+        "id": "gr_ok",
+        "name": "SAFE",
+        "x": 480,
+        "y": 340
+      },
+      {
+        "id": "gr_bl",
+        "name": "BLOCKED",
+        "x": 260,
+        "y": 300
+      },
+      {
+        "id": "gr_fb",
+        "name": "FALLBACK",
+        "x": 120,
+        "y": 340
+      }
+    ]
+  },
+  "agent_hitl": {
+    "category": "Agentic AI",
+    "description": "Agent escalates high-risk decisions to human. FSM guarantees no high-risk action executes without sign-off.",
+    "edges": [
+      {
+        "event": "CLASSIFY_RISK",
+        "from": "hl_t",
+        "id": "hl_e1",
+        "to": "hl_a"
+      },
+      {
+        "event": "LOW_RISK",
+        "from": "hl_a",
+        "id": "hl_e2",
+        "to": "hl_lo"
+      },
+      {
+        "event": "HIGH_RISK",
+        "from": "hl_a",
+        "id": "hl_e3",
+        "to": "hl_hr"
+      },
+      {
+        "event": "HUMAN_APPROVES",
+        "from": "hl_hr",
+        "id": "hl_e4",
+        "to": "hl_ap"
+      },
+      {
+        "event": "HUMAN_REJECTS",
+        "from": "hl_hr",
+        "id": "hl_e5",
+        "to": "hl_rj"
+      },
+      {
+        "event": "EXECUTE",
+        "from": "hl_ap",
+        "id": "hl_e6",
+        "to": "hl_ex"
+      },
+      {
+        "event": "EXECUTE",
+        "from": "hl_lo",
+        "id": "hl_e7",
+        "to": "hl_ex"
+      },
+      {
+        "event": "REVISE",
+        "from": "hl_rj",
+        "id": "hl_e8",
+        "to": "hl_rv"
+      },
+      {
+        "event": "RESUBMIT",
+        "from": "hl_rv",
+        "id": "hl_e9",
+        "to": "hl_a"
+      }
+    ],
+    "finalStateIds": [
+      "hl_ex"
+    ],
+    "initialStateId": "hl_t",
+    "label": "Human-in-the-Loop Agent",
+    "nodes": [
+      {
+        "id": "hl_t",
+        "name": "TASK",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "hl_a",
+        "name": "ANALYZING",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "hl_lo",
+        "name": "LOW_RISK_EXEC",
+        "x": 400,
+        "y": 80
+      },
+      {
+        "id": "hl_hr",
+        "name": "HUMAN_REVIEW",
+        "x": 400,
+        "y": 220
+      },
+      {
+        "id": "hl_ap",
+        "name": "APPROVED",
+        "x": 520,
+        "y": 160
+      },
+      {
+        "id": "hl_rj",
+        "name": "REJECTED",
+        "x": 520,
+        "y": 300
+      },
+      {
+        "id": "hl_ex",
+        "name": "EXECUTED",
+        "x": 400,
+        "y": 380
+      },
+      {
+        "id": "hl_rv",
+        "name": "REVISED",
+        "x": 220,
+        "y": 300
+      }
+    ]
+  },
+  "agent_memory": {
+    "category": "Agentic AI",
+    "description": "Working memory: buffer, summarize when full, promote to long-term, evict stale, retrieve on demand.",
+    "edges": [
+      {
+        "event": "NEW_CONTEXT",
+        "from": "am_e",
+        "id": "am_e1",
+        "to": "am_b"
+      },
+      {
+        "event": "APPEND",
+        "from": "am_b",
+        "id": "am_e2",
+        "to": "am_b"
+      },
+      {
+        "event": "CAPACITY",
+        "from": "am_b",
+        "id": "am_e3",
+        "to": "am_f"
+      },
+      {
+        "event": "COMPRESS",
+        "from": "am_f",
+        "id": "am_e4",
+        "to": "am_s"
+      },
+      {
+        "event": "IMPORTANT",
+        "from": "am_s",
+        "id": "am_e5",
+        "to": "am_p"
+      },
+      {
+        "event": "SUMMARY_STORED",
+        "from": "am_s",
+        "id": "am_e6",
+        "to": "am_b"
+      },
+      {
+        "event": "PROMOTED",
+        "from": "am_p",
+        "id": "am_e7",
+        "to": "am_b"
+      },
+      {
+        "event": "QUERY",
+        "from": "am_b",
+        "id": "am_e8",
+        "to": "am_r"
+      },
+      {
+        "event": "INJECTED",
+        "from": "am_r",
+        "id": "am_e9",
+        "to": "am_b"
+      }
+    ],
+    "finalStateIds": [
+      "am_b"
+    ],
+    "initialStateId": "am_e",
+    "label": "Agent Memory Management",
+    "nodes": [
+      {
+        "id": "am_e",
+        "name": "EMPTY",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "am_b",
+        "name": "BUFFERING",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "am_f",
+        "name": "BUFFER_FULL",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "am_s",
+        "name": "SUMMARIZING",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "am_p",
+        "name": "PROMOTING",
+        "x": 380,
+        "y": 300
+      },
+      {
+        "id": "am_r",
+        "name": "RETRIEVING",
+        "x": 220,
+        "y": 300
+      }
+    ]
+  },
+  "agent_multiAgent": {
+    "category": "Agentic AI",
+    "description": "Supervisor-worker: decompose task, delegate to specialists, collect results, resolve conflicts, synthesize.",
+    "edges": [
+      {
+        "event": "ANALYZE",
+        "from": "ma_r",
+        "id": "ma_e1",
+        "to": "ma_d"
+      },
+      {
+        "event": "SUBTASKS_READY",
+        "from": "ma_d",
+        "id": "ma_e2",
+        "to": "ma_dl"
+      },
+      {
+        "event": "DISPATCHED",
+        "from": "ma_dl",
+        "id": "ma_e3",
+        "to": "ma_w"
+      },
+      {
+        "event": "ALL_RETURNED",
+        "from": "ma_w",
+        "id": "ma_e4",
+        "to": "ma_c"
+      },
+      {
+        "event": "CONSISTENT",
+        "from": "ma_c",
+        "id": "ma_e5",
+        "to": "ma_s"
+      },
+      {
+        "event": "CONFLICT",
+        "from": "ma_c",
+        "id": "ma_e6",
+        "to": "ma_rsl"
+      },
+      {
+        "event": "REDELEGATE",
+        "from": "ma_rsl",
+        "id": "ma_e7",
+        "to": "ma_dl"
+      },
+      {
+        "event": "RESOLVED",
+        "from": "ma_rsl",
+        "id": "ma_e8",
+        "to": "ma_s"
+      },
+      {
+        "event": "FINAL_ANSWER",
+        "from": "ma_s",
+        "id": "ma_e9",
+        "to": "ma_dn"
+      },
+      {
+        "event": "TIMEOUT",
+        "from": "ma_w",
+        "id": "ma_e10",
+        "to": "ma_dl"
+      }
+    ],
+    "finalStateIds": [
+      "ma_dn"
+    ],
+    "initialStateId": "ma_r",
+    "label": "Multi-Agent Orchestration",
+    "nodes": [
+      {
+        "id": "ma_r",
+        "name": "RECEIVED",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "ma_d",
+        "name": "DECOMPOSING",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "ma_dl",
+        "name": "DELEGATING",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "ma_w",
+        "name": "WAITING",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "ma_c",
+        "name": "COLLECTING",
+        "x": 380,
+        "y": 280
+      },
+      {
+        "id": "ma_rsl",
+        "name": "RESOLVING",
+        "x": 500,
+        "y": 360
+      },
+      {
+        "id": "ma_s",
+        "name": "SYNTHESIZING",
+        "x": 260,
+        "y": 340
+      },
+      {
+        "id": "ma_dn",
+        "name": "DELIVERED",
+        "x": 120,
+        "y": 380
+      }
+    ]
+  },
+  "agent_planning": {
+    "category": "Agentic AI",
+    "description": "Separate planning from execution: generate plan, validate, execute steps, monitor, re-plan on failure.",
+    "edges": [
+      {
+        "event": "DECOMPOSE",
+        "from": "pe_g",
+        "id": "pe_e1",
+        "to": "pe_p"
+      },
+      {
+        "event": "PLAN_DRAFT",
+        "from": "pe_p",
+        "id": "pe_e2",
+        "to": "pe_v"
+      },
+      {
+        "event": "FEASIBLE",
+        "from": "pe_v",
+        "id": "pe_e3",
+        "to": "pe_x"
+      },
+      {
+        "event": "INFEASIBLE",
+        "from": "pe_v",
+        "id": "pe_e4",
+        "to": "pe_p"
+      },
+      {
+        "event": "STEP_COMPLETE",
+        "from": "pe_x",
+        "id": "pe_e5",
+        "to": "pe_m"
+      },
+      {
+        "event": "NEXT_STEP",
+        "from": "pe_m",
+        "id": "pe_e6",
+        "to": "pe_x"
+      },
+      {
+        "event": "STEP_FAILED",
+        "from": "pe_m",
+        "id": "pe_e7",
+        "to": "pe_rp"
+      },
+      {
+        "event": "ALL_DONE",
+        "from": "pe_m",
+        "id": "pe_e8",
+        "to": "pe_d"
+      },
+      {
+        "event": "NEW_PLAN",
+        "from": "pe_rp",
+        "id": "pe_e9",
+        "to": "pe_p"
+      }
+    ],
+    "finalStateIds": [
+      "pe_d"
+    ],
+    "initialStateId": "pe_g",
+    "label": "Agent Plan-and-Execute",
+    "nodes": [
+      {
+        "id": "pe_g",
+        "name": "GOAL",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "pe_p",
+        "name": "PLANNING",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "pe_v",
+        "name": "VALIDATING",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "pe_x",
+        "name": "EXECUTING_STEP",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "pe_m",
+        "name": "MONITORING",
+        "x": 380,
+        "y": 300
+      },
+      {
+        "id": "pe_rp",
+        "name": "REPLANNING",
+        "x": 220,
+        "y": 300
+      },
+      {
+        "id": "pe_d",
+        "name": "GOAL_ACHIEVED",
+        "x": 500,
+        "y": 380
+      }
+    ]
+  },
+  "agent_rag": {
+    "category": "Agentic AI",
+    "description": "Retrieval-Augmented Generation: classify, retrieve, evaluate relevance, augment, generate, verify grounding. Prevents hallucination via grounding checks.",
+    "edges": [
+      {
+        "event": "RECEIVED",
+        "from": "rag_q",
+        "id": "rag_e1",
+        "to": "rag_c"
+      },
+      {
+        "event": "NEEDS_RETRIEVAL",
+        "from": "rag_c",
+        "id": "rag_e2",
+        "to": "rag_r"
+      },
+      {
+        "event": "NO_RETRIEVAL",
+        "from": "rag_c",
+        "id": "rag_e3",
+        "to": "rag_g"
+      },
+      {
+        "event": "CHUNKS_RETURNED",
+        "from": "rag_r",
+        "id": "rag_e4",
+        "to": "rag_ev"
+      },
+      {
+        "event": "RELEVANT",
+        "from": "rag_ev",
+        "id": "rag_e5",
+        "to": "rag_a"
+      },
+      {
+        "event": "IRRELEVANT",
+        "from": "rag_ev",
+        "id": "rag_e6",
+        "to": "rag_r"
+      },
+      {
+        "event": "PROMPT_READY",
+        "from": "rag_a",
+        "id": "rag_e7",
+        "to": "rag_g"
+      },
+      {
+        "event": "RESPONSE_READY",
+        "from": "rag_g",
+        "id": "rag_e8",
+        "to": "rag_v"
+      },
+      {
+        "event": "GROUNDED",
+        "from": "rag_v",
+        "id": "rag_e9",
+        "to": "rag_d"
+      },
+      {
+        "event": "NOT_GROUNDED",
+        "from": "rag_v",
+        "id": "rag_e10",
+        "to": "rag_r"
+      }
+    ],
+    "finalStateIds": [
+      "rag_d"
+    ],
+    "initialStateId": "rag_q",
+    "label": "RAG Pipeline",
+    "nodes": [
+      {
+        "id": "rag_q",
+        "name": "QUERY",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "rag_c",
+        "name": "CLASSIFY",
+        "x": 200,
+        "y": 120
+      },
+      {
+        "id": "rag_r",
+        "name": "RETRIEVING",
+        "x": 340,
+        "y": 120
+      },
+      {
+        "id": "rag_ev",
+        "name": "EVAL_RELEVANCE",
+        "x": 460,
+        "y": 200
+      },
+      {
+        "id": "rag_a",
+        "name": "AUGMENTING",
+        "x": 460,
+        "y": 320
+      },
+      {
+        "id": "rag_g",
+        "name": "GENERATING",
+        "x": 320,
+        "y": 320
+      },
+      {
+        "id": "rag_v",
+        "name": "GROUNDING_CHECK",
+        "x": 180,
+        "y": 320
+      },
+      {
+        "id": "rag_d",
+        "name": "DELIVERED",
+        "x": 80,
+        "y": 380
+      }
+    ]
+  },
+  "agent_scopeAuth": {
+    "category": "Agentic AI",
+    "description": "Permission management: request capability, check scope, grant/deny, audit usage, revoke on violation. Prevents privilege escalation.",
+    "edges": [
+      {
+        "event": "CHECK",
+        "from": "sa_r",
+        "id": "sa_e1",
+        "to": "sa_c"
+      },
+      {
+        "event": "IN_SCOPE",
+        "from": "sa_c",
+        "id": "sa_e2",
+        "to": "sa_g"
+      },
+      {
+        "event": "OUT_OF_SCOPE",
+        "from": "sa_c",
+        "id": "sa_e3",
+        "to": "sa_d"
+      },
+      {
+        "event": "ACCESS",
+        "from": "sa_g",
+        "id": "sa_e4",
+        "to": "sa_u"
+      },
+      {
+        "event": "LOG",
+        "from": "sa_u",
+        "id": "sa_e5",
+        "to": "sa_a"
+      },
+      {
+        "event": "COMPLIANT",
+        "from": "sa_a",
+        "id": "sa_e6",
+        "to": "sa_u"
+      },
+      {
+        "event": "VIOLATION",
+        "from": "sa_a",
+        "id": "sa_e7",
+        "to": "sa_rv"
+      },
+      {
+        "event": "NEW_CAPABILITY",
+        "from": "sa_u",
+        "id": "sa_e8",
+        "to": "sa_r"
+      }
+    ],
+    "finalStateIds": [
+      "sa_u"
+    ],
+    "initialStateId": "sa_r",
+    "label": "Agent Scope and Authorization",
+    "nodes": [
+      {
+        "id": "sa_r",
+        "name": "REQUEST",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "sa_c",
+        "name": "SCOPE_CHECK",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "sa_g",
+        "name": "GRANTED",
+        "x": 380,
+        "y": 80
+      },
+      {
+        "id": "sa_d",
+        "name": "DENIED",
+        "x": 380,
+        "y": 220
+      },
+      {
+        "id": "sa_u",
+        "name": "USING",
+        "x": 500,
+        "y": 120
+      },
+      {
+        "id": "sa_a",
+        "name": "AUDITING",
+        "x": 500,
+        "y": 280
+      },
+      {
+        "id": "sa_rv",
+        "name": "REVOKED",
+        "x": 360,
+        "y": 340
+      }
+    ]
+  },
+  "agent_taskLifecycle": {
+    "category": "Agentic AI",
+    "description": "Core agent loop: receive, plan, execute tools, observe, reflect, respond. FSM prevents responding before observing tool results.",
+    "edges": [
+      {
+        "event": "TASK_RECEIVED",
+        "from": "at_i",
+        "id": "at_e1",
+        "to": "at_p"
+      },
+      {
+        "event": "PLAN_READY",
+        "from": "at_p",
+        "id": "at_e2",
+        "to": "at_e"
+      },
+      {
+        "event": "TOOL_RETURNED",
+        "from": "at_e",
+        "id": "at_e3",
+        "to": "at_o"
+      },
+      {
+        "event": "RESULTS_PARSED",
+        "from": "at_o",
+        "id": "at_e4",
+        "to": "at_r"
+      },
+      {
+        "event": "NEED_MORE_INFO",
+        "from": "at_r",
+        "id": "at_e5",
+        "to": "at_p"
+      },
+      {
+        "event": "SUFFICIENT",
+        "from": "at_r",
+        "id": "at_e6",
+        "to": "at_rs"
+      },
+      {
+        "event": "DELIVERED",
+        "from": "at_rs",
+        "id": "at_e7",
+        "to": "at_d"
+      },
+      {
+        "event": "NO_TOOLS_NEEDED",
+        "from": "at_p",
+        "id": "at_e8",
+        "to": "at_rs"
+      }
+    ],
+    "finalStateIds": [
+      "at_d"
+    ],
+    "initialStateId": "at_i",
+    "label": "Agent Task Lifecycle",
+    "nodes": [
+      {
+        "id": "at_i",
+        "name": "IDLE",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "at_p",
+        "name": "PLANNING",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "at_e",
+        "name": "EXECUTING",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "at_o",
+        "name": "OBSERVING",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "at_r",
+        "name": "REFLECTING",
+        "x": 380,
+        "y": 300
+      },
+      {
+        "id": "at_rs",
+        "name": "RESPONDING",
+        "x": 220,
+        "y": 300
+      },
+      {
+        "id": "at_d",
+        "name": "DONE",
+        "x": 80,
+        "y": 340
+      }
+    ]
+  },
+  "agent_toolUse": {
+    "category": "Agentic AI",
+    "description": "Function-calling FSM: parse intent, select tool, validate params, execute, handle success/failure. Ensures validation before execution.",
+    "edges": [
+      {
+        "event": "INTENT_CLEAR",
+        "from": "tu_p",
+        "id": "tu_e1",
+        "to": "tu_s"
+      },
+      {
+        "event": "TOOL_MATCHED",
+        "from": "tu_s",
+        "id": "tu_e2",
+        "to": "tu_v"
+      },
+      {
+        "event": "NO_MATCH",
+        "from": "tu_s",
+        "id": "tu_e3",
+        "to": "tu_fb"
+      },
+      {
+        "event": "PARAMS_VALID",
+        "from": "tu_v",
+        "id": "tu_e4",
+        "to": "tu_x"
+      },
+      {
+        "event": "PARAMS_INVALID",
+        "from": "tu_v",
+        "id": "tu_e5",
+        "to": "tu_s"
+      },
+      {
+        "event": "RESULT",
+        "from": "tu_x",
+        "id": "tu_e6",
+        "to": "tu_ok"
+      },
+      {
+        "event": "ERROR",
+        "from": "tu_x",
+        "id": "tu_e7",
+        "to": "tu_fl"
+      },
+      {
+        "event": "RETRY",
+        "from": "tu_fl",
+        "id": "tu_e8",
+        "to": "tu_s"
+      },
+      {
+        "event": "MAX_RETRIES",
+        "from": "tu_fl",
+        "id": "tu_e9",
+        "to": "tu_fb"
+      }
+    ],
+    "finalStateIds": [
+      "tu_ok",
+      "tu_fb"
+    ],
+    "initialStateId": "tu_p",
+    "label": "Agent Tool Selection",
+    "nodes": [
+      {
+        "id": "tu_p",
+        "name": "PARSE_INTENT",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "tu_s",
+        "name": "SELECT_TOOL",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "tu_v",
+        "name": "VALIDATE_PARAMS",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "tu_x",
+        "name": "EXECUTING",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "tu_ok",
+        "name": "SUCCESS",
+        "x": 400,
+        "y": 320
+      },
+      {
+        "id": "tu_fl",
+        "name": "TOOL_FAILED",
+        "x": 500,
+        "y": 380
+      },
+      {
+        "id": "tu_fb",
+        "name": "FALLBACK",
+        "x": 260,
+        "y": 340
+      }
+    ]
+  },
+  "bank_baselCapital": {
+    "category": "Banking",
+    "description": "ICAAP: risk identification, RWA computation, stress testing, buffer calibration, supervisory review.",
+    "edges": [
+      {
+        "event": "QUANTIFY",
+        "from": "bc_ri",
+        "id": "bc_e1",
+        "to": "bc_rw"
+      },
+      {
+        "event": "RWA_READY",
+        "from": "bc_rw",
+        "id": "bc_e2",
+        "to": "bc_st"
+      },
+      {
+        "event": "SCENARIOS_RUN",
+        "from": "bc_st",
+        "id": "bc_e3",
+        "to": "bc_bf"
+      },
+      {
+        "event": "SUBMIT_ICAAP",
+        "from": "bc_bf",
+        "id": "bc_e4",
+        "to": "bc_sb"
+      },
+      {
+        "event": "REGULATOR_REVIEWS",
+        "from": "bc_sb",
+        "id": "bc_e5",
+        "to": "bc_sr"
+      },
+      {
+        "event": "NO_OBJECTION",
+        "from": "bc_sr",
+        "id": "bc_e6",
+        "to": "bc_ap"
+      },
+      {
+        "event": "ADD_ON_REQUIRED",
+        "from": "bc_sr",
+        "id": "bc_e7",
+        "to": "bc_bf"
+      }
+    ],
+    "finalStateIds": [
+      "bc_ap"
+    ],
+    "initialStateId": "bc_ri",
+    "label": "Basel Capital Review",
+    "nodes": [
+      {
+        "id": "bc_ri",
+        "name": "RISK_IDENT",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "bc_rw",
+        "name": "RWA_COMPUTE",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "bc_st",
+        "name": "STRESS_TEST",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "bc_bf",
+        "name": "BUFFER_CALIB",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "bc_sb",
+        "name": "SUBMITTED",
+        "x": 380,
+        "y": 300
+      },
+      {
+        "id": "bc_sr",
+        "name": "SUPERVISORY_REVIEW",
+        "x": 220,
+        "y": 300
+      },
+      {
+        "id": "bc_ap",
+        "name": "APPROVED",
+        "x": 80,
+        "y": 340
+      }
+    ]
+  },
+  "bank_corrBanking": {
+    "category": "Banking",
+    "description": "Cross-border payment via SWIFT: MT103, intermediary processing, nostro/vostro reconciliation, beneficiary credit.",
+    "edges": [
+      {
+        "event": "SEND_MT103",
+        "from": "cb_i",
+        "id": "cb_e1",
+        "to": "cb_sw"
+      },
+      {
+        "event": "ROUTE",
+        "from": "cb_sw",
+        "id": "cb_e2",
+        "to": "cb_int"
+      },
+      {
+        "event": "COMPLIANCE_CHECK",
+        "from": "cb_int",
+        "id": "cb_e3",
+        "to": "cb_sc"
+      },
+      {
+        "event": "CLEAR",
+        "from": "cb_sc",
+        "id": "cb_e4",
+        "to": "cb_nr"
+      },
+      {
+        "event": "HOLD_FOR_REVIEW",
+        "from": "cb_sc",
+        "id": "cb_e5",
+        "to": "cb_hl"
+      },
+      {
+        "event": "RELEASED",
+        "from": "cb_hl",
+        "id": "cb_e6",
+        "to": "cb_nr"
+      },
+      {
+        "event": "RECONCILE",
+        "from": "cb_nr",
+        "id": "cb_e7",
+        "to": "cb_vr"
+      },
+      {
+        "event": "CREDIT_BENEFICIARY",
+        "from": "cb_vr",
+        "id": "cb_e8",
+        "to": "cb_cr"
+      }
+    ],
+    "finalStateIds": [
+      "cb_cr"
+    ],
+    "initialStateId": "cb_i",
+    "label": "Correspondent Banking (SWIFT)",
+    "nodes": [
+      {
+        "id": "cb_i",
+        "name": "INITIATED",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "cb_sw",
+        "name": "SWIFT_SENT",
+        "x": 200,
+        "y": 120
+      },
+      {
+        "id": "cb_int",
+        "name": "INTERMEDIARY",
+        "x": 340,
+        "y": 120
+      },
+      {
+        "id": "cb_sc",
+        "name": "SCREENING",
+        "x": 460,
+        "y": 120
+      },
+      {
+        "id": "cb_nr",
+        "name": "NOSTRO_DEBIT",
+        "x": 460,
+        "y": 260
+      },
+      {
+        "id": "cb_vr",
+        "name": "VOSTRO_CREDIT",
+        "x": 340,
+        "y": 300
+      },
+      {
+        "id": "cb_cr",
+        "name": "BENEFICIARY_CREDIT",
+        "x": 200,
+        "y": 340
+      },
+      {
+        "id": "cb_hl",
+        "name": "HELD",
+        "x": 520,
+        "y": 380
+      }
+    ]
+  },
+  "bank_creditFacility": {
+    "category": "Banking",
+    "description": "Revolving credit: approval, commitment, drawdown, utilization, covenant testing, renewal/termination.",
+    "edges": [
+      {
+        "event": "SIGN",
+        "from": "cf_a",
+        "id": "cf_e1",
+        "to": "cf_c"
+      },
+      {
+        "event": "REQUEST_DRAW",
+        "from": "cf_c",
+        "id": "cf_e2",
+        "to": "cf_dr"
+      },
+      {
+        "event": "FUNDED",
+        "from": "cf_dr",
+        "id": "cf_e3",
+        "to": "cf_ut"
+      },
+      {
+        "event": "TEST_DATE",
+        "from": "cf_ut",
+        "id": "cf_e4",
+        "to": "cf_cv"
+      },
+      {
+        "event": "COVENANTS_MET",
+        "from": "cf_cv",
+        "id": "cf_e5",
+        "to": "cf_ut"
+      },
+      {
+        "event": "BREACHED",
+        "from": "cf_cv",
+        "id": "cf_e6",
+        "to": "cf_br"
+      },
+      {
+        "event": "WAIVER",
+        "from": "cf_br",
+        "id": "cf_e7",
+        "to": "cf_ut"
+      },
+      {
+        "event": "ACCELERATION",
+        "from": "cf_br",
+        "id": "cf_e8",
+        "to": "cf_tm"
+      },
+      {
+        "event": "RENEW",
+        "from": "cf_ut",
+        "id": "cf_e9",
+        "to": "cf_rn"
+      },
+      {
+        "event": "EXPIRE",
+        "from": "cf_ut",
+        "id": "cf_e10",
+        "to": "cf_tm"
+      }
+    ],
+    "finalStateIds": [
+      "cf_tm"
+    ],
+    "initialStateId": "cf_a",
+    "label": "Credit Facility Drawdown",
+    "nodes": [
+      {
+        "id": "cf_a",
+        "name": "APPROVED",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "cf_c",
+        "name": "COMMITTED",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "cf_dr",
+        "name": "DRAW_REQUESTED",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "cf_ut",
+        "name": "UTILIZED",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "cf_cv",
+        "name": "COVENANT_TEST",
+        "x": 380,
+        "y": 300
+      },
+      {
+        "id": "cf_br",
+        "name": "BREACH",
+        "x": 220,
+        "y": 360
+      },
+      {
+        "id": "cf_rn",
+        "name": "RENEWED",
+        "x": 500,
+        "y": 360
+      },
+      {
+        "id": "cf_tm",
+        "name": "TERMINATED",
+        "x": 100,
+        "y": 380
+      }
+    ]
+  },
+  "bank_csaMargining": {
+    "category": "Banking",
+    "description": "Daily margin cycle: portfolio valuation, exposure calculation, margin call, dispute resolution, collateral transfer.",
+    "edges": [
+      {
+        "event": "MARK_TO_MARKET",
+        "from": "csa_v",
+        "id": "csa_e1",
+        "to": "csa_e"
+      },
+      {
+        "event": "THRESHOLD_BREACH",
+        "from": "csa_e",
+        "id": "csa_e2",
+        "to": "csa_c"
+      },
+      {
+        "event": "WITHIN_THRESHOLD",
+        "from": "csa_e",
+        "id": "csa_e3",
+        "to": "csa_s"
+      },
+      {
+        "event": "COUNTERPARTY_AGREES",
+        "from": "csa_c",
+        "id": "csa_e4",
+        "to": "csa_a"
+      },
+      {
+        "event": "COUNTERPARTY_DISPUTES",
+        "from": "csa_c",
+        "id": "csa_e5",
+        "to": "csa_d"
+      },
+      {
+        "event": "RESOLVED",
+        "from": "csa_d",
+        "id": "csa_e6",
+        "to": "csa_a"
+      },
+      {
+        "event": "TRANSFER",
+        "from": "csa_a",
+        "id": "csa_e7",
+        "to": "csa_t"
+      },
+      {
+        "event": "RECEIVED",
+        "from": "csa_t",
+        "id": "csa_e8",
+        "to": "csa_s"
+      },
+      {
+        "event": "NEXT_CYCLE",
+        "from": "csa_s",
+        "id": "csa_e9",
+        "to": "csa_v"
+      }
+    ],
+    "finalStateIds": [
+      "csa_s"
+    ],
+    "initialStateId": "csa_v",
+    "label": "ISDA CSA Margining",
+    "nodes": [
+      {
+        "id": "csa_v",
+        "name": "VALUATION",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "csa_e",
+        "name": "EXPOSURE_CALC",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "csa_c",
+        "name": "CALL_ISSUED",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "csa_a",
+        "name": "AGREED",
+        "x": 500,
+        "y": 120
+      },
+      {
+        "id": "csa_d",
+        "name": "DISPUTED",
+        "x": 500,
+        "y": 280
+      },
+      {
+        "id": "csa_t",
+        "name": "COLLATERAL_XFER",
+        "x": 380,
+        "y": 280
+      },
+      {
+        "id": "csa_s",
+        "name": "SETTLED",
+        "x": 220,
+        "y": 320
+      }
+    ]
+  },
+  "bank_kycOnboarding": {
+    "category": "Banking",
+    "description": "Institutional client onboarding: identity verification, beneficial ownership, sanctions screening, risk rating, EDD, periodic review.",
+    "edges": [
+      {
+        "event": "SUBMIT",
+        "from": "kyc_app",
+        "id": "kyc_e1",
+        "to": "kyc_id"
+      },
+      {
+        "event": "ID_VERIFIED",
+        "from": "kyc_id",
+        "id": "kyc_e2",
+        "to": "kyc_bo"
+      },
+      {
+        "event": "OWNERSHIP_CLEAR",
+        "from": "kyc_bo",
+        "id": "kyc_e3",
+        "to": "kyc_scr"
+      },
+      {
+        "event": "NO_HITS",
+        "from": "kyc_scr",
+        "id": "kyc_e4",
+        "to": "kyc_rr"
+      },
+      {
+        "event": "SANCTIONS_HIT",
+        "from": "kyc_scr",
+        "id": "kyc_e5",
+        "to": "kyc_rej"
+      },
+      {
+        "event": "LOW_RISK",
+        "from": "kyc_rr",
+        "id": "kyc_e6",
+        "to": "kyc_app2"
+      },
+      {
+        "event": "HIGH_RISK",
+        "from": "kyc_rr",
+        "id": "kyc_e7",
+        "to": "kyc_edd"
+      },
+      {
+        "event": "EDD_PASS",
+        "from": "kyc_edd",
+        "id": "kyc_e8",
+        "to": "kyc_app2"
+      },
+      {
+        "event": "EDD_FAIL",
+        "from": "kyc_edd",
+        "id": "kyc_e9",
+        "to": "kyc_rej"
+      },
+      {
+        "event": "REVIEW_DUE",
+        "from": "kyc_app2",
+        "id": "kyc_e10",
+        "to": "kyc_rev"
+      },
+      {
+        "event": "RESCREEN",
+        "from": "kyc_rev",
+        "id": "kyc_e11",
+        "to": "kyc_scr"
+      }
+    ],
+    "finalStateIds": [
+      "kyc_app2"
+    ],
+    "initialStateId": "kyc_app",
+    "label": "KYC/AML Onboarding",
+    "nodes": [
+      {
+        "id": "kyc_app",
+        "name": "APPLICATION",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "kyc_id",
+        "name": "ID_VERIFICATION",
+        "x": 200,
+        "y": 120
+      },
+      {
+        "id": "kyc_bo",
+        "name": "BEN_OWNERSHIP",
+        "x": 340,
+        "y": 120
+      },
+      {
+        "id": "kyc_scr",
+        "name": "SCREENING",
+        "x": 460,
+        "y": 120
+      },
+      {
+        "id": "kyc_rr",
+        "name": "RISK_RATING",
+        "x": 520,
+        "y": 240
+      },
+      {
+        "id": "kyc_edd",
+        "name": "ENHANCED_DD",
+        "x": 400,
+        "y": 300
+      },
+      {
+        "id": "kyc_app2",
+        "name": "APPROVED",
+        "x": 260,
+        "y": 300
+      },
+      {
+        "id": "kyc_rej",
+        "name": "REJECTED",
+        "x": 260,
+        "y": 400
+      },
+      {
+        "id": "kyc_rev",
+        "name": "PERIODIC_REVIEW",
+        "x": 100,
+        "y": 340
+      }
+    ]
+  },
+  "bank_otcTrade": {
+    "category": "Banking",
+    "description": "Trade lifecycle for OTC derivatives: negotiation, confirmation, clearing, valuation, margin, novation/termination.",
+    "edges": [
+      {
+        "event": "AGREE_TERMS",
+        "from": "otc_n",
+        "id": "otc_e1",
+        "to": "otc_ex"
+      },
+      {
+        "event": "CONFIRM",
+        "from": "otc_ex",
+        "id": "otc_e2",
+        "to": "otc_cf"
+      },
+      {
+        "event": "SUBMIT_CCP",
+        "from": "otc_cf",
+        "id": "otc_e3",
+        "to": "otc_cl"
+      },
+      {
+        "event": "ACCEPTED",
+        "from": "otc_cl",
+        "id": "otc_e4",
+        "to": "otc_lv"
+      },
+      {
+        "event": "VALUATION_TRIGGER",
+        "from": "otc_lv",
+        "id": "otc_e5",
+        "to": "otc_mg"
+      },
+      {
+        "event": "MARGIN_SETTLED",
+        "from": "otc_mg",
+        "id": "otc_e6",
+        "to": "otc_lv"
+      },
+      {
+        "event": "NOVATE",
+        "from": "otc_lv",
+        "id": "otc_e7",
+        "to": "otc_nv"
+      },
+      {
+        "event": "MATURE",
+        "from": "otc_lv",
+        "id": "otc_e8",
+        "to": "otc_tm"
+      },
+      {
+        "event": "EARLY_TERMINATE",
+        "from": "otc_lv",
+        "id": "otc_e9",
+        "to": "otc_tm"
+      },
+      {
+        "event": "REJECTED",
+        "from": "otc_cl",
+        "id": "otc_e10",
+        "to": "otc_n"
+      }
+    ],
+    "finalStateIds": [
+      "otc_tm"
+    ],
+    "initialStateId": "otc_n",
+    "label": "OTC Derivative Lifecycle",
+    "nodes": [
+      {
+        "id": "otc_n",
+        "name": "NEGOTIATING",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "otc_ex",
+        "name": "EXECUTED",
+        "x": 200,
+        "y": 120
+      },
+      {
+        "id": "otc_cf",
+        "name": "CONFIRMED",
+        "x": 320,
+        "y": 120
+      },
+      {
+        "id": "otc_cl",
+        "name": "CLEARING",
+        "x": 440,
+        "y": 120
+      },
+      {
+        "id": "otc_lv",
+        "name": "LIVE",
+        "x": 520,
+        "y": 220
+      },
+      {
+        "id": "otc_mg",
+        "name": "MARGIN_CALL",
+        "x": 400,
+        "y": 300
+      },
+      {
+        "id": "otc_nv",
+        "name": "NOVATED",
+        "x": 520,
+        "y": 380
+      },
+      {
+        "id": "otc_tm",
+        "name": "TERMINATED",
+        "x": 300,
+        "y": 380
+      }
+    ]
+  },
+  "bank_regReporting": {
+    "category": "Banking",
+    "description": "CCAR/DFAST/PRA return: data collection, aggregation, validation, attestation, submission, feedback.",
+    "edges": [
+      {
+        "event": "EXTRACT_COMPLETE",
+        "from": "rr_dc",
+        "id": "rr_e1",
+        "to": "rr_ag"
+      },
+      {
+        "event": "AGGREGATED",
+        "from": "rr_ag",
+        "id": "rr_e2",
+        "to": "rr_vl"
+      },
+      {
+        "event": "RULES_PASS",
+        "from": "rr_vl",
+        "id": "rr_e3",
+        "to": "rr_at"
+      },
+      {
+        "event": "RULES_FAIL",
+        "from": "rr_vl",
+        "id": "rr_e4",
+        "to": "rr_dc"
+      },
+      {
+        "event": "CFO_SIGNS",
+        "from": "rr_at",
+        "id": "rr_e5",
+        "to": "rr_sb"
+      },
+      {
+        "event": "RESPONSE",
+        "from": "rr_sb",
+        "id": "rr_e6",
+        "to": "rr_fb"
+      },
+      {
+        "event": "NO_ISSUES",
+        "from": "rr_fb",
+        "id": "rr_e7",
+        "to": "rr_ac"
+      },
+      {
+        "event": "RESUBMIT",
+        "from": "rr_fb",
+        "id": "rr_e8",
+        "to": "rr_dc"
+      }
+    ],
+    "finalStateIds": [
+      "rr_ac"
+    ],
+    "initialStateId": "rr_dc",
+    "label": "Regulatory Report Submission",
+    "nodes": [
+      {
+        "id": "rr_dc",
+        "name": "DATA_COLLECTION",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "rr_ag",
+        "name": "AGGREGATION",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "rr_vl",
+        "name": "VALIDATION",
+        "x": 360,
+        "y": 120
+      },
+      {
+        "id": "rr_at",
+        "name": "ATTESTATION",
+        "x": 480,
+        "y": 200
+      },
+      {
+        "id": "rr_sb",
+        "name": "SUBMITTED",
+        "x": 480,
+        "y": 320
+      },
+      {
+        "id": "rr_fb",
+        "name": "FEEDBACK",
+        "x": 320,
+        "y": 340
+      },
+      {
+        "id": "rr_ac",
+        "name": "ACCEPTED",
+        "x": 160,
+        "y": 360
+      }
+    ]
+  },
+  "bank_secSettlement": {
+    "category": "Banking",
+    "description": "Post-trade: matching, affirmation, netting, pre-settlement checks, DVP at CSD, fails management.",
+    "edges": [
+      {
+        "event": "MATCH",
+        "from": "ss_tr",
+        "id": "ss_e1",
+        "to": "ss_mt"
+      },
+      {
+        "event": "AFFIRM",
+        "from": "ss_mt",
+        "id": "ss_e2",
+        "to": "ss_af"
+      },
+      {
+        "event": "NET",
+        "from": "ss_af",
+        "id": "ss_e3",
+        "to": "ss_nt"
+      },
+      {
+        "event": "CHECK_INVENTORY",
+        "from": "ss_nt",
+        "id": "ss_e4",
+        "to": "ss_ps"
+      },
+      {
+        "event": "FUNDS_OK",
+        "from": "ss_ps",
+        "id": "ss_e5",
+        "to": "ss_dv"
+      },
+      {
+        "event": "INSUFFICIENT",
+        "from": "ss_ps",
+        "id": "ss_e6",
+        "to": "ss_fl"
+      },
+      {
+        "event": "CSD_CONFIRMS",
+        "from": "ss_dv",
+        "id": "ss_e7",
+        "to": "ss_st"
+      },
+      {
+        "event": "RETRY",
+        "from": "ss_fl",
+        "id": "ss_e8",
+        "to": "ss_ps"
+      },
+      {
+        "event": "BUY_IN_PENDING",
+        "from": "ss_fl",
+        "id": "ss_e9",
+        "to": "ss_fl"
+      }
+    ],
+    "finalStateIds": [
+      "ss_st"
+    ],
+    "initialStateId": "ss_tr",
+    "label": "Securities Settlement (T+1)",
+    "nodes": [
+      {
+        "id": "ss_tr",
+        "name": "TRADED",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "ss_mt",
+        "name": "MATCHED",
+        "x": 200,
+        "y": 120
+      },
+      {
+        "id": "ss_af",
+        "name": "AFFIRMED",
+        "x": 320,
+        "y": 120
+      },
+      {
+        "id": "ss_nt",
+        "name": "NETTED",
+        "x": 440,
+        "y": 120
+      },
+      {
+        "id": "ss_ps",
+        "name": "PRE_SETTLE",
+        "x": 520,
+        "y": 220
+      },
+      {
+        "id": "ss_dv",
+        "name": "DVP",
+        "x": 400,
+        "y": 300
+      },
+      {
+        "id": "ss_st",
+        "name": "SETTLED",
+        "x": 260,
+        "y": 340
+      },
+      {
+        "id": "ss_fl",
+        "name": "FAILED",
+        "x": 520,
+        "y": 380
+      }
+    ]
+  },
+  "bank_structuredProduct": {
+    "category": "Banking",
+    "description": "Securitization: pooling, tranching, credit enhancement, issuance, waterfall distribution, trigger events, wind-down.",
+    "edges": [
+      {
+        "event": "POOL_CLOSED",
+        "from": "sp_p",
+        "id": "sp_e1",
+        "to": "sp_t"
+      },
+      {
+        "event": "TRANCHES_DEFINED",
+        "from": "sp_t",
+        "id": "sp_e2",
+        "to": "sp_ce"
+      },
+      {
+        "event": "PRICED",
+        "from": "sp_ce",
+        "id": "sp_e3",
+        "to": "sp_is"
+      },
+      {
+        "event": "PAYMENT_DATE",
+        "from": "sp_is",
+        "id": "sp_e4",
+        "to": "sp_wf"
+      },
+      {
+        "event": "NEXT_PERIOD",
+        "from": "sp_wf",
+        "id": "sp_e5",
+        "to": "sp_wf"
+      },
+      {
+        "event": "OC_IC_BREACH",
+        "from": "sp_wf",
+        "id": "sp_e6",
+        "to": "sp_tr"
+      },
+      {
+        "event": "ACCELERATE",
+        "from": "sp_tr",
+        "id": "sp_e7",
+        "to": "sp_ac"
+      },
+      {
+        "event": "CURE",
+        "from": "sp_tr",
+        "id": "sp_e8",
+        "to": "sp_wf"
+      },
+      {
+        "event": "LIQUIDATE",
+        "from": "sp_ac",
+        "id": "sp_e9",
+        "to": "sp_wd"
+      },
+      {
+        "event": "FINAL_MATURITY",
+        "from": "sp_wf",
+        "id": "sp_e10",
+        "to": "sp_wd"
+      }
+    ],
+    "finalStateIds": [
+      "sp_wd"
+    ],
+    "initialStateId": "sp_p",
+    "label": "Structured Product (CLO/CDO)",
+    "nodes": [
+      {
+        "id": "sp_p",
+        "name": "POOLING",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "sp_t",
+        "name": "TRANCHING",
+        "x": 200,
+        "y": 120
+      },
+      {
+        "id": "sp_ce",
+        "name": "CREDIT_ENHANCE",
+        "x": 340,
+        "y": 120
+      },
+      {
+        "id": "sp_is",
+        "name": "ISSUED",
+        "x": 460,
+        "y": 120
+      },
+      {
+        "id": "sp_wf",
+        "name": "WATERFALL",
+        "x": 520,
+        "y": 240
+      },
+      {
+        "id": "sp_tr",
+        "name": "TRIGGER_EVENT",
+        "x": 380,
+        "y": 300
+      },
+      {
+        "id": "sp_ac",
+        "name": "ACCELERATED",
+        "x": 380,
+        "y": 400
+      },
+      {
+        "id": "sp_wd",
+        "name": "WOUND_DOWN",
+        "x": 200,
+        "y": 380
+      }
+    ]
+  },
+  "bank_syndicatedLoan": {
+    "category": "Banking",
+    "description": "Mandate through syndication, commitment, drawdown, servicing, amendment, repayment.",
+    "edges": [
+      {
+        "event": "LAUNCH",
+        "from": "sl_m",
+        "id": "sl_e1",
+        "to": "sl_s"
+      },
+      {
+        "event": "BOOKBUILD_CLOSE",
+        "from": "sl_s",
+        "id": "sl_e2",
+        "to": "sl_c"
+      },
+      {
+        "event": "DRAWDOWN",
+        "from": "sl_c",
+        "id": "sl_e3",
+        "to": "sl_d"
+      },
+      {
+        "event": "PERIOD_END",
+        "from": "sl_d",
+        "id": "sl_e4",
+        "to": "sl_sv"
+      },
+      {
+        "event": "REDRAWN",
+        "from": "sl_sv",
+        "id": "sl_e5",
+        "to": "sl_d"
+      },
+      {
+        "event": "AMEND_REQUEST",
+        "from": "sl_sv",
+        "id": "sl_e6",
+        "to": "sl_am"
+      },
+      {
+        "event": "CONSENT_ACHIEVED",
+        "from": "sl_am",
+        "id": "sl_e7",
+        "to": "sl_sv"
+      },
+      {
+        "event": "FINAL_PAYMENT",
+        "from": "sl_sv",
+        "id": "sl_e8",
+        "to": "sl_rp"
+      },
+      {
+        "event": "PREPAY",
+        "from": "sl_d",
+        "id": "sl_e9",
+        "to": "sl_rp"
+      }
+    ],
+    "finalStateIds": [
+      "sl_rp"
+    ],
+    "initialStateId": "sl_m",
+    "label": "Syndicated Loan Lifecycle",
+    "nodes": [
+      {
+        "id": "sl_m",
+        "name": "MANDATE",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "sl_s",
+        "name": "SYNDICATION",
+        "x": 200,
+        "y": 120
+      },
+      {
+        "id": "sl_c",
+        "name": "COMMITTED",
+        "x": 340,
+        "y": 120
+      },
+      {
+        "id": "sl_d",
+        "name": "DRAWN",
+        "x": 460,
+        "y": 200
+      },
+      {
+        "id": "sl_sv",
+        "name": "SERVICING",
+        "x": 460,
+        "y": 320
+      },
+      {
+        "id": "sl_am",
+        "name": "AMENDMENT",
+        "x": 300,
+        "y": 320
+      },
+      {
+        "id": "sl_rp",
+        "name": "REPAID",
+        "x": 160,
+        "y": 360
+      }
+    ]
+  },
+  "bank_treasuryLiquidity": {
+    "category": "Banking",
+    "description": "Daily treasury: cash position, intraday monitoring, buffer management, central bank access, LCR/NSFR compliance.",
+    "edges": [
+      {
+        "event": "DAY_START",
+        "from": "tl_op",
+        "id": "tl_e1",
+        "to": "tl_id"
+      },
+      {
+        "event": "WITHIN_LIMITS",
+        "from": "tl_id",
+        "id": "tl_e2",
+        "to": "tl_ok"
+      },
+      {
+        "event": "APPROACHING_LIMIT",
+        "from": "tl_id",
+        "id": "tl_e3",
+        "to": "tl_lo"
+      },
+      {
+        "event": "ACCESS_FACILITY",
+        "from": "tl_lo",
+        "id": "tl_e4",
+        "to": "tl_cb"
+      },
+      {
+        "event": "FUNDED",
+        "from": "tl_cb",
+        "id": "tl_e5",
+        "to": "tl_ok"
+      },
+      {
+        "event": "RUN_LCR",
+        "from": "tl_ok",
+        "id": "tl_e6",
+        "to": "tl_st"
+      },
+      {
+        "event": "COMPLIANT",
+        "from": "tl_st",
+        "id": "tl_e7",
+        "to": "tl_cl"
+      },
+      {
+        "event": "NON_COMPLIANT",
+        "from": "tl_st",
+        "id": "tl_e8",
+        "to": "tl_lo"
+      },
+      {
+        "event": "NEXT_DAY",
+        "from": "tl_cl",
+        "id": "tl_e9",
+        "to": "tl_op"
+      }
+    ],
+    "finalStateIds": [
+      "tl_cl"
+    ],
+    "initialStateId": "tl_op",
+    "label": "Treasury Liquidity Management",
+    "nodes": [
+      {
+        "id": "tl_op",
+        "name": "OPENING_POS",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "tl_id",
+        "name": "INTRADAY_MONITOR",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "tl_ok",
+        "name": "BUFFER_OK",
+        "x": 380,
+        "y": 80
+      },
+      {
+        "id": "tl_lo",
+        "name": "BUFFER_LOW",
+        "x": 380,
+        "y": 220
+      },
+      {
+        "id": "tl_cb",
+        "name": "CB_FACILITY",
+        "x": 500,
+        "y": 220
+      },
+      {
+        "id": "tl_st",
+        "name": "STRESS_TEST",
+        "x": 500,
+        "y": 340
+      },
+      {
+        "id": "tl_cl",
+        "name": "DAY_CLOSED",
+        "x": 280,
+        "y": 340
+      }
+    ]
+  },
+  "lloyds_capitalCall": {
+    "category": "Lloyd's Insurance",
+    "description": "Capital provision: FAL provided, annual adequacy test, cash call on deficiency, surplus release.",
+    "edges": [
+      {
+        "event": "ANNUAL_TEST",
+        "from": "fl_p",
+        "id": "fl_e1",
+        "to": "fl_t"
+      },
+      {
+        "event": "SUFFICIENT",
+        "from": "fl_t",
+        "id": "fl_e2",
+        "to": "fl_ok"
+      },
+      {
+        "event": "INSUFFICIENT",
+        "from": "fl_t",
+        "id": "fl_e3",
+        "to": "fl_df"
+      },
+      {
+        "event": "SURPLUS",
+        "from": "fl_ok",
+        "id": "fl_e4",
+        "to": "fl_rl"
+      },
+      {
+        "event": "MAINTAINED",
+        "from": "fl_ok",
+        "id": "fl_e5",
+        "to": "fl_p"
+      },
+      {
+        "event": "CALL_FUNDS",
+        "from": "fl_df",
+        "id": "fl_e6",
+        "to": "fl_cc"
+      },
+      {
+        "event": "RECEIVED",
+        "from": "fl_cc",
+        "id": "fl_e7",
+        "to": "fl_rs"
+      },
+      {
+        "event": "OK",
+        "from": "fl_rs",
+        "id": "fl_e8",
+        "to": "fl_p"
+      },
+      {
+        "event": "NEXT_YEAR",
+        "from": "fl_rl",
+        "id": "fl_e9",
+        "to": "fl_p"
+      }
+    ],
+    "finalStateIds": [
+      "fl_p"
+    ],
+    "initialStateId": "fl_p",
+    "label": "Funds at Lloyd's (FAL)",
+    "nodes": [
+      {
+        "id": "fl_p",
+        "name": "FAL_PROVIDED",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "fl_t",
+        "name": "ADEQUACY_TEST",
+        "x": 240,
+        "y": 120
+      },
+      {
+        "id": "fl_ok",
+        "name": "ADEQUATE",
+        "x": 420,
+        "y": 80
+      },
+      {
+        "id": "fl_df",
+        "name": "DEFICIENT",
+        "x": 420,
+        "y": 220
+      },
+      {
+        "id": "fl_cc",
+        "name": "CASH_CALL",
+        "x": 540,
+        "y": 220
+      },
+      {
+        "id": "fl_rl",
+        "name": "RELEASED",
+        "x": 540,
+        "y": 80
+      },
+      {
+        "id": "fl_rs",
+        "name": "RESTORED",
+        "x": 380,
+        "y": 340
+      }
+    ]
+  },
+  "lloyds_claim": {
+    "category": "Lloyd's Insurance",
+    "description": "Claim at Lloyd's: notification, lead adjuster, agreement parties, ECF processing, bureau settlement, recovery.",
+    "edges": [
+      {
+        "event": "APPOINT_LEAD",
+        "from": "lc_n",
+        "id": "lc_e1",
+        "to": "lc_la"
+      },
+      {
+        "event": "REVIEW",
+        "from": "lc_la",
+        "id": "lc_e2",
+        "to": "lc_ap"
+      },
+      {
+        "event": "AGREE_AMOUNT",
+        "from": "lc_ap",
+        "id": "lc_e3",
+        "to": "lc_ec"
+      },
+      {
+        "event": "DISPUTE",
+        "from": "lc_ap",
+        "id": "lc_e4",
+        "to": "lc_la"
+      },
+      {
+        "event": "PROCESS",
+        "from": "lc_ec",
+        "id": "lc_e5",
+        "to": "lc_bs"
+      },
+      {
+        "event": "SUBROGATION",
+        "from": "lc_bs",
+        "id": "lc_e6",
+        "to": "lc_rc"
+      },
+      {
+        "event": "FINAL",
+        "from": "lc_bs",
+        "id": "lc_e7",
+        "to": "lc_cl"
+      },
+      {
+        "event": "COMPLETE",
+        "from": "lc_rc",
+        "id": "lc_e8",
+        "to": "lc_cl"
+      }
+    ],
+    "finalStateIds": [
+      "lc_cl"
+    ],
+    "initialStateId": "lc_n",
+    "label": "Lloyd's Claim Lifecycle",
+    "nodes": [
+      {
+        "id": "lc_n",
+        "name": "NOTIFIED",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "lc_la",
+        "name": "LEAD_APPOINTED",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "lc_ap",
+        "name": "AGREEMENT_PARTY",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "lc_ec",
+        "name": "ECF_PROCESSED",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "lc_bs",
+        "name": "BUREAU_SETTLED",
+        "x": 380,
+        "y": 300
+      },
+      {
+        "id": "lc_rc",
+        "name": "RECOVERY",
+        "x": 220,
+        "y": 300
+      },
+      {
+        "id": "lc_cl",
+        "name": "CLOSED",
+        "x": 80,
+        "y": 340
+      }
+    ]
+  },
+  "lloyds_coverholder": {
+    "category": "Lloyd's Insurance",
+    "description": "Coverholder lifecycle: application, approval, binder, bordereaux reporting, performance monitoring, renewal/termination.",
+    "edges": [
+      {
+        "event": "APPROVED",
+        "from": "cv_a",
+        "id": "cv_e1",
+        "to": "cv_ap"
+      },
+      {
+        "event": "REJECTED",
+        "from": "cv_a",
+        "id": "cv_e2",
+        "to": "cv_tm"
+      },
+      {
+        "event": "BINDER_SIGNED",
+        "from": "cv_ap",
+        "id": "cv_e3",
+        "to": "cv_ba"
+      },
+      {
+        "event": "SUBMIT_BORDEREAUX",
+        "from": "cv_ba",
+        "id": "cv_e4",
+        "to": "cv_bx"
+      },
+      {
+        "event": "REVIEW",
+        "from": "cv_bx",
+        "id": "cv_e5",
+        "to": "cv_pm"
+      },
+      {
+        "event": "SATISFACTORY",
+        "from": "cv_pm",
+        "id": "cv_e6",
+        "to": "cv_ba"
+      },
+      {
+        "event": "POOR",
+        "from": "cv_pm",
+        "id": "cv_e7",
+        "to": "cv_tm"
+      },
+      {
+        "event": "EXPIRY",
+        "from": "cv_ba",
+        "id": "cv_e8",
+        "to": "cv_rn"
+      },
+      {
+        "event": "NEW_BINDER",
+        "from": "cv_rn",
+        "id": "cv_e9",
+        "to": "cv_ba"
+      }
+    ],
+    "finalStateIds": [
+      "cv_ba"
+    ],
+    "initialStateId": "cv_a",
+    "label": "Lloyd's Delegated Authority",
+    "nodes": [
+      {
+        "id": "cv_a",
+        "name": "APPLICATION",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "cv_ap",
+        "name": "APPROVED",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "cv_ba",
+        "name": "BINDER_ACTIVE",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "cv_bx",
+        "name": "BORDEREAUX",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "cv_pm",
+        "name": "MONITORING",
+        "x": 380,
+        "y": 300
+      },
+      {
+        "id": "cv_rn",
+        "name": "RENEWED",
+        "x": 220,
+        "y": 300
+      },
+      {
+        "id": "cv_tm",
+        "name": "TERMINATED",
+        "x": 80,
+        "y": 340
+      }
+    ]
+  },
+  "lloyds_outwardRI": {
+    "category": "Lloyd's Insurance",
+    "description": "Syndicate purchasing reinsurance: programme design, placement, inception, claims recovery, commutation/expiry.",
+    "edges": [
+      {
+        "event": "PROGRAMME_SET",
+        "from": "ri_d",
+        "id": "ri_e1",
+        "to": "ri_p"
+      },
+      {
+        "event": "PLACED",
+        "from": "ri_p",
+        "id": "ri_e2",
+        "to": "ri_at"
+      },
+      {
+        "event": "INCEPTION",
+        "from": "ri_at",
+        "id": "ri_e3",
+        "to": "ri_iv"
+      },
+      {
+        "event": "LOSS_EVENT",
+        "from": "ri_iv",
+        "id": "ri_e4",
+        "to": "ri_cl"
+      },
+      {
+        "event": "RECOVERED",
+        "from": "ri_cl",
+        "id": "ri_e5",
+        "to": "ri_iv"
+      },
+      {
+        "event": "EXPIRY",
+        "from": "ri_iv",
+        "id": "ri_e6",
+        "to": "ri_ex"
+      },
+      {
+        "event": "COMMUTE",
+        "from": "ri_iv",
+        "id": "ri_e7",
+        "to": "ri_cm"
+      }
+    ],
+    "finalStateIds": [
+      "ri_ex",
+      "ri_cm"
+    ],
+    "initialStateId": "ri_d",
+    "label": "Lloyd's Outward Reinsurance",
+    "nodes": [
+      {
+        "id": "ri_d",
+        "name": "DESIGNING",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "ri_p",
+        "name": "PLACING",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "ri_at",
+        "name": "ATTACHED",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "ri_iv",
+        "name": "INFORCE",
+        "x": 480,
+        "y": 200
+      },
+      {
+        "id": "ri_cl",
+        "name": "CLAIM_RECOVERY",
+        "x": 380,
+        "y": 300
+      },
+      {
+        "id": "ri_cm",
+        "name": "COMMUTED",
+        "x": 220,
+        "y": 340
+      },
+      {
+        "id": "ri_ex",
+        "name": "EXPIRED",
+        "x": 480,
+        "y": 360
+      }
+    ]
+  },
+  "lloyds_placing": {
+    "category": "Lloyd's Insurance",
+    "description": "Risk placement: broker prepares slip, lead quotes, following market subscribes, sign-down if oversubscribed, contract certain.",
+    "edges": [
+      {
+        "event": "LEAD_SCRATCHES",
+        "from": "lp_s",
+        "id": "lp_e1",
+        "to": "lp_l"
+      },
+      {
+        "event": "BROKER_MARKETS",
+        "from": "lp_l",
+        "id": "lp_e2",
+        "to": "lp_f"
+      },
+      {
+        "event": "GT_100PCT",
+        "from": "lp_f",
+        "id": "lp_e3",
+        "to": "lp_os"
+      },
+      {
+        "event": "EQ_100PCT",
+        "from": "lp_f",
+        "id": "lp_e4",
+        "to": "lp_cc"
+      },
+      {
+        "event": "LT_100PCT",
+        "from": "lp_f",
+        "id": "lp_e5",
+        "to": "lp_us"
+      },
+      {
+        "event": "SIGN_DOWN",
+        "from": "lp_os",
+        "id": "lp_e6",
+        "to": "lp_sd"
+      },
+      {
+        "event": "CONFIRMED",
+        "from": "lp_sd",
+        "id": "lp_e7",
+        "to": "lp_cc"
+      },
+      {
+        "event": "MRC_ISSUED",
+        "from": "lp_cc",
+        "id": "lp_e8",
+        "to": "lp_bd"
+      },
+      {
+        "event": "REMARKET",
+        "from": "lp_us",
+        "id": "lp_e9",
+        "to": "lp_f"
+      }
+    ],
+    "finalStateIds": [
+      "lp_bd"
+    ],
+    "initialStateId": "lp_s",
+    "label": "Lloyd's Placing/Binding",
+    "nodes": [
+      {
+        "id": "lp_s",
+        "name": "SLIP_PREPARED",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "lp_l",
+        "name": "LEAD_QUOTED",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "lp_f",
+        "name": "FOLLOWING_MKT",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "lp_os",
+        "name": "OVERSUBSCRIBED",
+        "x": 500,
+        "y": 120
+      },
+      {
+        "id": "lp_sd",
+        "name": "SIGNED_DOWN",
+        "x": 500,
+        "y": 260
+      },
+      {
+        "id": "lp_cc",
+        "name": "CONTRACT_CERTAIN",
+        "x": 380,
+        "y": 300
+      },
+      {
+        "id": "lp_us",
+        "name": "UNDERSUBSCRIBED",
+        "x": 380,
+        "y": 400
+      },
+      {
+        "id": "lp_bd",
+        "name": "BOUND",
+        "x": 220,
+        "y": 340
+      }
+    ]
+  },
+  "lloyds_solvency": {
+    "category": "Lloyd's Insurance",
+    "description": "Syndicate SCR computation, internal model, aggregate to Lloyd's, PRA submission, member-level reporting.",
+    "edges": [
+      {
+        "event": "COMPUTE_SCR",
+        "from": "sr_d",
+        "id": "sr_e1",
+        "to": "sr_s"
+      },
+      {
+        "event": "MODEL_RUN",
+        "from": "sr_s",
+        "id": "sr_e2",
+        "to": "sr_im"
+      },
+      {
+        "event": "RESULTS",
+        "from": "sr_im",
+        "id": "sr_e3",
+        "to": "sr_ag"
+      },
+      {
+        "event": "SUBMIT_PRA",
+        "from": "sr_ag",
+        "id": "sr_e4",
+        "to": "sr_pr"
+      },
+      {
+        "event": "MEMBER_LEVEL",
+        "from": "sr_ag",
+        "id": "sr_e5",
+        "to": "sr_ml"
+      },
+      {
+        "event": "ACCEPTS",
+        "from": "sr_pr",
+        "id": "sr_e6",
+        "to": "sr_ac"
+      },
+      {
+        "event": "QUERIES",
+        "from": "sr_pr",
+        "id": "sr_e7",
+        "to": "sr_d"
+      },
+      {
+        "event": "DISTRIBUTED",
+        "from": "sr_ml",
+        "id": "sr_e8",
+        "to": "sr_ac"
+      }
+    ],
+    "finalStateIds": [
+      "sr_ac"
+    ],
+    "initialStateId": "sr_d",
+    "label": "Lloyd's Regulatory Reporting",
+    "nodes": [
+      {
+        "id": "sr_d",
+        "name": "DATA_GATHERING",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "sr_s",
+        "name": "SCR_COMPUTE",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "sr_im",
+        "name": "INTERNAL_MODEL",
+        "x": 380,
+        "y": 120
+      },
+      {
+        "id": "sr_ag",
+        "name": "AGGREGATE",
+        "x": 500,
+        "y": 200
+      },
+      {
+        "id": "sr_pr",
+        "name": "PRA_SUBMISSION",
+        "x": 380,
+        "y": 300
+      },
+      {
+        "id": "sr_ml",
+        "name": "MEMBER_REPORTS",
+        "x": 220,
+        "y": 300
+      },
+      {
+        "id": "sr_ac",
+        "name": "ACCEPTED",
+        "x": 80,
+        "y": 340
+      }
+    ]
+  },
+  "lloyds_syndicateCycle": {
+    "category": "Lloyd's Insurance",
+    "description": "Annual cycle: business plan, Lloyd's approval, stamp allocation, YOA open, monitoring, RITC or run-off at 36 months.",
+    "edges": [
+      {
+        "event": "APPROVED",
+        "from": "ls_bp",
+        "id": "ls_e1",
+        "to": "ls_ca"
+      },
+      {
+        "event": "REJECTED",
+        "from": "ls_bp",
+        "id": "ls_e2",
+        "to": "ls_bp"
+      },
+      {
+        "event": "ALLOCATE_STAMP",
+        "from": "ls_ca",
+        "id": "ls_e3",
+        "to": "ls_st"
+      },
+      {
+        "event": "JAN_1",
+        "from": "ls_st",
+        "id": "ls_e4",
+        "to": "ls_yoa"
+      },
+      {
+        "event": "QUARTER_END",
+        "from": "ls_yoa",
+        "id": "ls_e5",
+        "to": "ls_mn"
+      },
+      {
+        "event": "CONTINUE",
+        "from": "ls_mn",
+        "id": "ls_e6",
+        "to": "ls_yoa"
+      },
+      {
+        "event": "36_MONTHS",
+        "from": "ls_mn",
+        "id": "ls_e7",
+        "to": "ls_ri"
+      },
+      {
+        "event": "CLOSE",
+        "from": "ls_ri",
+        "id": "ls_e8",
+        "to": "ls_bp"
+      },
+      {
+        "event": "CANNOT_RITC",
+        "from": "ls_mn",
+        "id": "ls_e9",
+        "to": "ls_ro"
+      }
+    ],
+    "finalStateIds": [
+      "ls_ri"
+    ],
+    "initialStateId": "ls_bp",
+    "label": "Syndicate Capacity Cycle",
+    "nodes": [
+      {
+        "id": "ls_bp",
+        "name": "BUSINESS_PLAN",
+        "x": 80,
+        "y": 200
+      },
+      {
+        "id": "ls_ca",
+        "name": "CAPACITY_APPROVED",
+        "x": 220,
+        "y": 120
+      },
+      {
+        "id": "ls_st",
+        "name": "STAMP_SET",
+        "x": 360,
+        "y": 120
+      },
+      {
+        "id": "ls_yoa",
+        "name": "YOA_OPEN",
+        "x": 480,
+        "y": 200
+      },
+      {
+        "id": "ls_mn",
+        "name": "MONITORING",
+        "x": 360,
+        "y": 300
+      },
+      {
+        "id": "ls_ri",
+        "name": "RITC",
+        "x": 500,
+        "y": 360
+      },
+      {
+        "id": "ls_ro",
+        "name": "RUN_OFF",
+        "x": 220,
+        "y": 380
+      }
+    ]
+  }
 };
 
 function validateMachine ( m, key )
