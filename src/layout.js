@@ -1,469 +1,137 @@
 // layout.js
-// Graph layout algorithms for Typestate FSM editor.
-// Three algorithms: force-directed (Fruchterman-Reingold), hierarchical (Sugiyama-style), circular.
-// Auto-detection picks the best algorithm based on graph structure.
+// Layout engine powered by Cytoscape.js
+// Install: npm install cytoscape cytoscape-dagre dagre
 
-const DEFAULT_OPTS = {
-  width: 620,
-  height: 440,
-  padding: 60,
-  nodeRadius: 32,
-  idealEdgeLen: 120,
+import cytoscape from "cytoscape";
+import dagre from "cytoscape-dagre";
+
+cytoscape.use(dagre);
+
+// available layout algorithms
+export const LAYOUT_ALGORITHMS = {
+  auto:        { name: "Auto", description: "Picks best algorithm based on graph structure" },
+  dagre:       { name: "Dagre (Hierarchical)", description: "Layered DAG layout via dagre" },
+  cose:        { name: "CoSE (Force)", description: "Compound Spring Embedder, force-directed" },
+  breadthfirst:{ name: "Breadthfirst", description: "Tree layout via BFS from root" },
+  circle:      { name: "Circle", description: "Nodes on a circle in BFS order" },
+  concentric:  { name: "Concentric", description: "Concentric rings by connectivity" },
+  grid:        { name: "Grid", description: "Even grid placement" },
 };
 
-// -- Utility --
-
-function buildAdj ( nodes, edges )
-{
-  const fwd = {},
-    rev = {};
-  nodes.forEach( ( n ) =>
-  {
-    fwd[ n.id ] = [];
-    rev[ n.id ] = [];
-  } );
-  edges.forEach( ( e ) =>
-  {
-    if ( fwd[ e.from ] ) fwd[ e.from ].push( e.to );
-    if ( rev[ e.to ] ) rev[ e.to ].push( e.from );
-  } );
-  return { fwd, rev };
+function buildCy(nodes, edges) {
+  const elements = [
+    ...nodes.map((n) => ({ data: { id: n.id }, position: { x: n.x || 0, y: n.y || 0 } })),
+    ...edges
+      .filter((e) => e.from !== e.to)
+      .map((e) => ({ data: { id: e.id, source: e.from, target: e.to } })),
+  ];
+  return cytoscape({ headless: true, styleEnabled: false, elements });
 }
 
-function hasCycle ( nodes, edges )
-{
-  const { fwd } = buildAdj( nodes, edges );
-  const white = new Set( nodes.map( ( n ) => n.id ) );
-  const grey = new Set();
-  const dfs = ( u ) =>
-  {
-    white.delete( u );
-    grey.add( u );
-    for ( const v of fwd[ u ] || [] )
-    {
-      if ( grey.has( v ) ) return true;
-      if ( white.has( v ) && dfs( v ) ) return true;
-    }
-    grey.delete( u );
-    return false;
+function extractPositions(cy, nodes, opts) {
+  const pad = opts?.padding || 60;
+  const w = opts?.width || 620;
+  const h = opts?.height || 440;
+  const raw = nodes.map((n) => {
+    const pos = cy.getElementById(n.id).position();
+    return { ...n, x: pos.x, y: pos.y };
+  });
+  // normalize into canvas bounds
+  if (raw.length === 0) return raw;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  raw.forEach((n) => { minX = Math.min(minX, n.x); minY = Math.min(minY, n.y); maxX = Math.max(maxX, n.x); maxY = Math.max(maxY, n.y); });
+  const rangeX = maxX - minX || 1;
+  const rangeY = maxY - minY || 1;
+  const usableW = w - 2 * pad;
+  const usableH = h - 2 * pad;
+  return raw.map((n) => ({
+    ...n,
+    x: Math.round(pad + ((n.x - minX) / rangeX) * usableW),
+    y: Math.round(pad + ((n.y - minY) / rangeY) * usableH),
+  }));
+}
+
+function runLayout(cy, layoutName, opts) {
+  const common = { animate: false, fit: true };
+  const configs = {
+    dagre: {
+      ...common, name: "dagre", rankDir: "LR", nodeSep: 60, rankSep: 100,
+      roots: opts?.initialStateId ? [opts.initialStateId] : undefined,
+    },
+    cose: {
+      ...common, name: "cose", idealEdgeLength: 120, nodeRepulsion: 8000,
+      nodeOverlap: 40, gravity: 0.25, numIter: 200, randomize: true,
+    },
+    breadthfirst: {
+      ...common, name: "breadthfirst", directed: true, spacingFactor: 1.2,
+      roots: opts?.initialStateId ? [opts.initialStateId] : undefined,
+    },
+    circle:     { ...common, name: "circle" },
+    concentric: {
+      ...common, name: "concentric",
+      concentric: (node) => node.degree(), levelWidth: () => 2,
+    },
+    grid: { ...common, name: "grid", rows: Math.ceil(Math.sqrt(cy.nodes().length)) },
   };
-  for ( const n of nodes )
-  {
-    if ( white.has( n.id ) && dfs( n.id ) ) return true;
-  }
-  return false;
+  const config = configs[layoutName] || configs.cose;
+  cy.layout(config).run();
 }
 
-function detectGraphType ( nodes, edges, initialStateId )
-{
-  if ( nodes.length <= 3 ) return "circular";
-  if ( nodes.length <= 5 && edges.length <= nodes.length + 1 ) return "circular";
-  const selfLoops = edges.filter( ( e ) => e.from === e.to );
-  const nonSelfEdges = edges.filter( ( e ) => e.from !== e.to );
-  if ( !hasCycle( nodes, nonSelfEdges ) ) return "dag";
-  const ratio = nonSelfEdges.length / Math.max( nodes.length, 1 );
-  if ( ratio > 2.5 ) return "force";
-  return "force";
-}
-
-// -- Force-Directed Layout (Fruchterman-Reingold) --
-
-function forceDirectedLayout ( nodes, edges, opts )
-{
-  const o = { ...DEFAULT_OPTS, ...opts };
-  const w = o.width - 2 * o.padding;
-  const h = o.height - 2 * o.padding;
-  const area = w * h;
-  const k = Math.sqrt( area / Math.max( nodes.length, 1 ) );
-  const iterations = 80;
-  let temp = w / 4;
-  const cooling = temp / ( iterations + 1 );
-
-  const pos = {};
-  nodes.forEach( ( n, i ) =>
-  {
-    const angle = ( 2 * Math.PI * i ) / nodes.length;
-    const cx = w / 2,
-      cy = h / 2;
-    const r = Math.min( w, h ) / 3;
-    pos[ n.id ] = { x: cx + r * Math.cos( angle ), y: cy + r * Math.sin( angle ) };
-  } );
-
-  const nonSelfEdges = edges.filter( ( e ) => e.from !== e.to );
-
-  for ( let iter = 0; iter < iterations; iter++ )
-  {
-    const disp = {};
-    nodes.forEach( ( n ) =>
-    {
-      disp[ n.id ] = { x: 0, y: 0 };
-    } );
-
-    // repulsive forces between all pairs
-    for ( let i = 0; i < nodes.length; i++ )
-    {
-      for ( let j = i + 1; j < nodes.length; j++ )
-      {
-        const u = nodes[ i ].id,
-          v = nodes[ j ].id;
-        let dx = pos[ u ].x - pos[ v ].x;
-        let dy = pos[ u ].y - pos[ v ].y;
-        const dist = Math.max( Math.sqrt( dx * dx + dy * dy ), 0.01 );
-        const force = ( k * k ) / dist;
-        const fx = ( dx / dist ) * force;
-        const fy = ( dy / dist ) * force;
-        disp[ u ].x += fx;
-        disp[ u ].y += fy;
-        disp[ v ].x -= fx;
-        disp[ v ].y -= fy;
-      }
+function detectBest(nodes, edges) {
+  if (nodes.length <= 3) return "circle";
+  const nonSelf = edges.filter((e) => e.from !== e.to);
+  // check for cycles via DFS
+  const fwd = {};
+  nodes.forEach((n) => (fwd[n.id] = []));
+  nonSelf.forEach((e) => { if (fwd[e.from]) fwd[e.from].push(e.to); });
+  const white = new Set(nodes.map((n) => n.id));
+  const grey = new Set();
+  let cyclic = false;
+  const dfs = (u) => {
+    white.delete(u); grey.add(u);
+    for (const v of (fwd[u] || [])) {
+      if (grey.has(v)) { cyclic = true; return; }
+      if (white.has(v)) dfs(v);
+      if (cyclic) return;
     }
-
-    // attractive forces along edges
-    nonSelfEdges.forEach( ( e ) =>
-    {
-      if ( !pos[ e.from ] || !pos[ e.to ] ) return;
-      let dx = pos[ e.from ].x - pos[ e.to ].x;
-      let dy = pos[ e.from ].y - pos[ e.to ].y;
-      const dist = Math.max( Math.sqrt( dx * dx + dy * dy ), 0.01 );
-      const force = ( dist * dist ) / k;
-      const fx = ( dx / dist ) * force;
-      const fy = ( dy / dist ) * force;
-      disp[ e.from ].x -= fx;
-      disp[ e.from ].y -= fy;
-      disp[ e.to ].x += fx;
-      disp[ e.to ].y += fy;
-    } );
-
-    // apply displacements with temperature
-    nodes.forEach( ( n ) =>
-    {
-      const d = disp[ n.id ];
-      const dist = Math.max( Math.sqrt( d.x * d.x + d.y * d.y ), 0.01 );
-      const scale = Math.min( dist, temp ) / dist;
-      pos[ n.id ].x += d.x * scale;
-      pos[ n.id ].y += d.y * scale;
-      pos[ n.id ].x = Math.max( 0, Math.min( w, pos[ n.id ].x ) );
-      pos[ n.id ].y = Math.max( 0, Math.min( h, pos[ n.id ].y ) );
-    } );
-
-    temp -= cooling;
+    grey.delete(u);
+  };
+  for (const n of nodes) {
+    if (white.has(n.id)) dfs(n.id);
+    if (cyclic) break;
   }
-
-  // resolve overlaps with a final pass
-  resolveOverlaps( nodes, pos, o.nodeRadius );
-
-  return nodes.map( ( n ) => ( {
-    ...n,
-    x: Math.round( pos[ n.id ].x + o.padding ),
-    y: Math.round( pos[ n.id ].y + o.padding ),
-  } ) );
+  if (!cyclic) return "dagre";
+  return "cose";
 }
 
-// -- Hierarchical Layout (Sugiyama-style) --
-
-function hierarchicalLayout ( nodes, edges, opts )
-{
-  const o = { ...DEFAULT_OPTS, ...opts };
-  const w = o.width - 2 * o.padding;
-  const h = o.height - 2 * o.padding;
-  const { fwd } = buildAdj( nodes, edges );
-  const nonSelfEdges = edges.filter( ( e ) => e.from !== e.to );
-
-  // layer assignment by longest path from sources
-  const layers = {};
-  const nodeIds = nodes.map( ( n ) => n.id );
-  const inDeg = {};
-  nodeIds.forEach( ( id ) =>
-  {
-    inDeg[ id ] = 0;
-  } );
-  nonSelfEdges.forEach( ( e ) =>
-  {
-    if ( inDeg[ e.to ] !== undefined ) inDeg[ e.to ]++;
-  } );
-
-  // find sources (in-degree 0 among non-self edges, or initialStateId)
-  let sources = nodeIds.filter( ( id ) => inDeg[ id ] === 0 );
-  if ( o.initialStateId && !sources.includes( o.initialStateId ) )
-  {
-    sources = [
-      o.initialStateId,
-      ...sources.filter( ( s ) => s !== o.initialStateId ),
-    ];
+export function autoLayout(nodes, edges, opts) {
+  if (!nodes || nodes.length === 0) return nodes;
+  if (nodes.length === 1) {
+    const w = opts?.width || 620, h = opts?.height || 440;
+    return [{ ...nodes[0], x: w / 2, y: h / 2 }];
   }
-  if ( sources.length === 0 ) sources = [ nodeIds[ 0 ] ];
+  const algo = detectBest(nodes, edges);
+  return layoutWithAlgorithm(nodes, edges, algo, opts);
+}
 
-  // BFS layer assignment
-  const visited = new Set();
-  const queue = sources.map( ( s ) => ( { id: s, layer: 0 } ) );
-  sources.forEach( ( s ) =>
-  {
-    visited.add( s );
-    layers[ s ] = 0;
-  } );
+export function layoutWithAlgorithm(nodes, edges, algorithm, opts) {
+  if (!nodes || nodes.length === 0) return nodes;
+  const algoName = algorithm === "auto" ? detectBest(nodes, edges) : algorithm;
+  const cy = buildCy(nodes, edges);
+  runLayout(cy, algoName, opts);
+  const result = extractPositions(cy, nodes, opts);
+  cy.destroy();
+  return result;
+}
 
-  // while ( queue.length > 0 )
-  // {
-  //   const { id, layer } = queue.shift();
-  //   layers[ id ] = Math.max( layers[ id ] || 0, layer );
-  //   ( fwd[ id ] || [] ).forEach( ( nb ) =>
-  //   {
-  //     if ( !visited.has( nb ) )
-  //     {
-  //       visited.add( nb );
-  //       layers[ nb ] = layer + 1;
-  //       queue.push( { id: nb, layer: layer + 1 } );
-  //     } else
-  //     {
-  //       // push deeper if needed for proper layering
-  //       if ( ( layers[ nb ] || 0 ) <= layer )
-  //       {
-  //         layers[ nb ] = layer + 1;
-  //         queue.push( { id: nb, layer: layer + 1 } );
-  //       }
-  //     }
-  //   } );
-  // }
-  let bfsLimit = nodes.length * nodes.length + 100;
-  while ( queue.length > 0 && bfsLimit > 0 )
-  {
-    bfsLimit--;
-    const { id, layer } = queue.shift();
-    if ( layer > nodes.length ) continue;
-    layers[ id ] = Math.max( layers[ id ] || 0, layer );
-    ( fwd[ id ] || [] ).forEach( ( nb ) =>
-    {
-      if ( !visited.has( nb ) )
-      {
-        visited.add( nb );
-        layers[ nb ] = layer + 1;
-        queue.push( { id: nb, layer: layer + 1 } );
-      }
-    } );
-  }
-
-  // assign unvisited nodes to the last layer
-  const maxLayer = Math.max( 0, ...Object.values( layers ) );
-  nodeIds.forEach( ( id ) =>
-  {
-    if ( layers[ id ] === undefined ) layers[ id ] = maxLayer + 1;
-  } );
-
-  // group by layer
-  const layerGroups = {};
-  const finalMaxLayer = Math.max( 0, ...Object.values( layers ) );
-  for ( let i = 0; i <= finalMaxLayer; i++ ) layerGroups[ i ] = [];
-  nodeIds.forEach( ( id ) =>
-  {
-    layerGroups[ layers[ id ] ].push( id );
-  } );
-
-  // crossing reduction: barycenter heuristic within each layer
-  for ( let pass = 0; pass < 4; pass++ )
-  {
-    for ( let l = 1; l <= finalMaxLayer; l++ )
-    {
-      const group = layerGroups[ l ];
-      const prevGroup = layerGroups[ l - 1 ];
-      if ( !prevGroup || prevGroup.length === 0 ) continue;
-      const bary = {};
-      group.forEach( ( id ) =>
-      {
-        const parents = nonSelfEdges
-          .filter( ( e ) => e.to === id && prevGroup.includes( e.from ) )
-          .map( ( e ) => prevGroup.indexOf( e.from ) );
-        bary[ id ] =
-          parents.length > 0
-            ? parents.reduce( ( a, b ) => a + b, 0 ) / parents.length
-            : 0;
-      } );
-      group.sort( ( a, b ) => bary[ a ] - bary[ b ] );
-      layerGroups[ l ] = group;
+export function detectOverlaps(nodes, radius) {
+  const minDist = (radius || 32) * 2.2;
+  let count = 0;
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const dx = nodes[j].x - nodes[i].x, dy = nodes[j].y - nodes[i].y;
+      if (Math.sqrt(dx * dx + dy * dy) < minDist) count++;
     }
   }
-
-  // position nodes
-  const numLayers = finalMaxLayer + 1;
-  const layerSpacing = numLayers > 1 ? w / ( numLayers - 1 ) : w / 2;
-  const pos = {};
-
-  for ( let l = 0; l <= finalMaxLayer; l++ )
-  {
-    const group = layerGroups[ l ];
-    const count = group.length;
-    const nodeSpacing = count > 1 ? h / ( count - 1 ) : h / 2;
-    group.forEach( ( id, i ) =>
-    {
-      pos[ id ] = {
-        x: numLayers > 1 ? l * layerSpacing : w / 2,
-        y: count > 1 ? i * nodeSpacing : h / 2,
-      };
-    } );
-  }
-
-  resolveOverlaps( nodes, pos, o.nodeRadius );
-
-  return nodes.map( ( n ) => ( {
-    ...n,
-    x: Math.round( pos[ n.id ].x + o.padding ),
-    y: Math.round( pos[ n.id ].y + o.padding ),
-  } ) );
-}
-
-// -- Circular Layout --
-
-function circularLayout ( nodes, edges, opts )
-{
-  const o = { ...DEFAULT_OPTS, ...opts };
-  const cx = ( o.width - 2 * o.padding ) / 2;
-  const cy = ( o.height - 2 * o.padding ) / 2;
-  const r = Math.min( cx, cy ) - o.nodeRadius;
-
-  // order: initial state first, then BFS order
-  const ordered = [];
-  const visited = new Set();
-  const { fwd } = buildAdj( nodes, edges );
-
-  const start = o.initialStateId || ( nodes[ 0 ] && nodes[ 0 ].id );
-  if ( start )
-  {
-    const q = [ start ];
-    visited.add( start );
-    while ( q.length > 0 )
-    {
-      const cur = q.shift();
-      ordered.push( cur );
-      ( fwd[ cur ] || [] ).forEach( ( nb ) =>
-      {
-        if ( !visited.has( nb ) )
-        {
-          visited.add( nb );
-          q.push( nb );
-        }
-      } );
-    }
-  }
-  // add any remaining
-  nodes.forEach( ( n ) =>
-  {
-    if ( !visited.has( n.id ) ) ordered.push( n.id );
-  } );
-
-  const posMap = {};
-  ordered.forEach( ( id, i ) =>
-  {
-    const angle = ( 2 * Math.PI * i ) / ordered.length - Math.PI / 2;
-    posMap[ id ] = {
-      x: cx + r * Math.cos( angle ),
-      y: cy + r * Math.sin( angle ),
-    };
-  } );
-
-  return nodes.map( ( n ) => ( {
-    ...n,
-    x: Math.round( posMap[ n.id ].x + o.padding ),
-    y: Math.round( posMap[ n.id ].y + o.padding ),
-  } ) );
-}
-
-// -- Overlap Resolution --
-
-function resolveOverlaps ( nodes, pos, radius )
-{
-  const minDist = radius * 2.5;
-  for ( let pass = 0; pass < 20; pass++ )
-  {
-    let moved = false;
-    for ( let i = 0; i < nodes.length; i++ )
-    {
-      for ( let j = i + 1; j < nodes.length; j++ )
-      {
-        const a = pos[ nodes[ i ].id ],
-          b = pos[ nodes[ j ].id ];
-        const dx = b.x - a.x,
-          dy = b.y - a.y;
-        const dist = Math.sqrt( dx * dx + dy * dy );
-        if ( dist < minDist && dist > 0 )
-        {
-          const push = ( minDist - dist ) / 2;
-          const ux = dx / dist,
-            uy = dy / dist;
-          a.x -= ux * push;
-          a.y -= uy * push;
-          b.x += ux * push;
-          b.y += uy * push;
-          moved = true;
-        } else if ( dist === 0 )
-        {
-          a.x -= minDist / 2;
-          b.x += minDist / 2;
-          moved = true;
-        }
-      }
-    }
-    if ( !moved ) break;
-  }
-}
-
-// -- Auto Layout (public API) --
-
-export function autoLayout ( nodes, edges, opts )
-{
-  if ( !nodes || nodes.length === 0 ) return nodes;
-  if ( nodes.length === 1 )
-  {
-    const o = { ...DEFAULT_OPTS, ...opts };
-    return [ { ...nodes[ 0 ], x: o.width / 2, y: o.height / 2 } ];
-  }
-  const graphType = detectGraphType( nodes, edges, opts?.initialStateId );
-  switch ( graphType )
-  {
-    case "dag":
-      return hierarchicalLayout( nodes, edges, opts );
-    case "circular":
-      return circularLayout( nodes, edges, opts );
-    default:
-      return forceDirectedLayout( nodes, edges, opts );
-  }
-}
-
-export function layoutWithAlgorithm ( nodes, edges, algorithm, opts )
-{
-  if ( !nodes || nodes.length === 0 ) return nodes;
-  switch ( algorithm )
-  {
-    case "hierarchical":
-      return hierarchicalLayout( nodes, edges, opts );
-    case "circular":
-      return circularLayout( nodes, edges, opts );
-    case "force":
-      return forceDirectedLayout( nodes, edges, opts );
-    default:
-      return autoLayout( nodes, edges, opts );
-  }
-}
-
-export function detectOverlaps ( nodes, radius )
-{
-  const minDist = ( radius || 32 ) * 2.2;
-  const overlaps = [];
-  for ( let i = 0; i < nodes.length; i++ )
-  {
-    for ( let j = i + 1; j < nodes.length; j++ )
-    {
-      const dx = nodes[ j ].x - nodes[ i ].x;
-      const dy = nodes[ j ].y - nodes[ i ].y;
-      const dist = Math.sqrt( dx * dx + dy * dy );
-      if ( dist < minDist )
-      {
-        overlaps.push( {
-          a: nodes[ i ].id,
-          b: nodes[ j ].id,
-          dist: Math.round( dist ),
-        } );
-      }
-    }
-  }
-  return overlaps;
+  return count;
 }
