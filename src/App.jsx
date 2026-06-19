@@ -1,6 +1,7 @@
 // App.jsx
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 // import { forceSimulation, forceManyBody, forceCollide, forceX, forceY, forceLink } from "d3-force";
+import aboutImage from "./src/assets/pangalacticgargleblaster_01.png";
 import { R, ARROW_SIZE, uid, resetIdCounter } from "./constants.js";
 import { NODE_THEMES, resolveNodeColors, resolveEdgeColors } from "./themes.js";
 import { validateMachine, validatePresetFile } from "./validation.js";
@@ -799,7 +800,7 @@ export default function App ()
             onClick={ () => setIsModalOpen( false ) }
           >
             <img
-              src="./src/assets/pangalacticgargleblaster_01.png"
+              src={ aboutImage }
               alt="Pan Galactic Gargle Blaster: Finite State Machines across the space-time continuum, by Shaurya Agarwal, © 2026, https://github.com/shauryashaurya"
               style={ { width: "50vw", height: "50vh", borderRadius: "1px", objectFit: "CONTAIN", marginBottom: "24px", border: "0px solid var(--ac)" } }
             />
