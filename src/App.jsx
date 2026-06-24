@@ -11,7 +11,7 @@ import { computeEdgePaths } from "./geometry.js";
 import { autoLayout, layoutWithAlgorithm, detectOverlaps as layoutDetectOverlaps, LAYOUT_ALGORITHMS } from "./layout.js";
 
 // load presets from external JSON (Vite resolves this at build time)
-import BUILTIN_PRESETS from "./typestate-presets.json";
+import BUILTIN_PRESETS from "./blasted-gargles-presets.json";
 const builtinMachines = BUILTIN_PRESETS.machines || BUILTIN_PRESETS;
 
 // -- Styles --
@@ -272,13 +272,13 @@ export default function App ()
 
   const exportCurrent = useCallback( () =>
   {
-    download( { version: "1.0.0", format: "typestate-fsm", machines: { exported: { label: "Exported", category: "Custom", nodes, edges, initialStateId, finalStateIds } } }, "typestate-machine.json" );
+    download( { version: "1.0.0", format: "hhgttg-fsm", machines: { exported: { label: "Exported", category: "Custom", nodes, edges, initialStateId, finalStateIds } } }, "blastedgargles-42.json" );
     pushDebug( [ { severity: "info", msg: "Exported current machine." } ] );
   }, [ nodes, edges, initialStateId, finalStateIds, download, pushDebug ] );
 
   const exportAll = useCallback( () =>
   {
-    download( { version: "1.0.0", format: "typestate-fsm", machines: presets }, "typestate-presets.json" );
+    download( { version: "1.0.0", format: "hhgttg-fsm", machines: presets }, "blasted-gargles-presets.json" );
     pushDebug( [ { severity: "info", msg: `Exported ${ Object.keys( presets ).length } presets.` } ] );
   }, [ presets, download, pushDebug ] );
 
