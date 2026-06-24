@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "format": "typestate-fsm",
-  "description": "Extended Typestate preset collection. Domain-specific machines for IFRS 17, IFRS 9, MCMC, and Bayesian analysis. Designed for teaching complex systems to new audiences.",
+  "format": "hhgttg-fsm",
+  "description": "Extended Pan Galactic Gargle Blaster preset collection. Domain-specific machines for IFRS 17, IFRS 9, MCMC, and Bayesian analysis. Designed for teaching complex systems to new audiences.",
   "machines": {
     "ifrs17_reinsurance": {
       "label": "IFRS 17: Reinsurance Held",
