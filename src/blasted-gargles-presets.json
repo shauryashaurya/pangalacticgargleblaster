@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "format": "typestate-fsm",
-  "description": "Typestate FSM preset collection. Each machine defines states (nodes), transitions (edges), an initial state, and accepting/final states.",
+  "format": "hhgttg-fsm",
+  "description": "Pan Galactic Gargle Blaster FSM preset collection. Each machine defines states (nodes), transitions (edges), an initial state, and accepting/final states.",
   "schema": {
     "node": "{ id: string, name: string, x: number, y: number }",
     "edge": "{ id: string, from: string (node id), to: string (node id), event: string }",
